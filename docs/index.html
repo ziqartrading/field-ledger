@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="ps" dir="rtl" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data: blob:; frame-src https://script.google.com https://script.googleusercontent.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests">
+
+<meta name="field-ledger-app" content="Field Ledger">
+<meta name="field-ledger-version" content="3.1.0">
+<meta name="field-ledger-schema" content="10">
+<meta name="field-ledger-build" content="2026-07-13-google-pwa">
+<title>Field Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=Caveat:wght@600&family=Spline+Sans+Mono:wght@500;600&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="manifest" href="./_r/m.webmanifest">
+<meta name="theme-color" content="#2f5dd0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Field Ledger">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<meta name="field-ledger-online-package" content="google-apps-script-pwa">
+<link rel="stylesheet" href="./_r/u.css">
+</head>
+<body>
+
+<div class="login" id="loginScreen">
+  <div class="login-card">
+    <div class="login-brand"><div class="mark">F</div><div><h1>Field Ledger</h1><div class="sub" data-i18n="sub"></div></div></div>
+    <h2 data-i18n="signInTitle"></h2>
+    <div class="field"><label data-i18n="username"></label><input id="loginUser" autocomplete="username"></div>
+    <div class="field"><label data-i18n="password"></label><input id="loginPass" type="password" autocomplete="current-password"></div>
+    <div class="login-err" id="loginErr"></div>
+    <button class="btn btn-primary login-btn" id="loginBtn" data-i18n="signIn"></button>
+    <div class="login-demo" id="loginDemo"></div>
+    <div class="login-lang"><button id="loginLangBtn"></button></div>
+  </div>
+</div>
+
+<header>
+  <div class="brand" id="brandHome" tabindex="0"><div class="mark">F</div><div><h1>Field Ledger</h1><div class="sub" data-i18n="sub"></div></div></div>
+  <div class="spacer"></div>
+  <button class="icon-btn" id="activityBtn" data-perm="viewActivity" data-title="activity"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg></button>
+  <button class="icon-btn" id="usersBtn" data-perm="manageUsers" data-title="users"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="3.5"/><path d="M22 21v-2a4 4 0 00-3-3.87M16 3.5a4 4 0 010 7.75"/></svg></button>
+  <button class="lang-btn" id="langBtn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 2.5 15.3 0 18M12 3c-2.5 2.7-2.5 15.3 0 18"/></svg><span id="langLabel"></span></button>
+  <div class="theme-switch">
+    <button id="lightBtn" class="on" data-title="light"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/></svg></button>
+    <button id="darkBtn" data-title="dark"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg></button>
+  </div>
+  <button class="btn btn-primary" id="newBookBtn" data-perm="ledgerBooks"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="lbl" data-i18n="newBook"></span></button>
+  <div class="usercluster">
+    <button class="userchip" id="userChip" style="position:relative"><span class="uava" id="uava"></span><span class="uname" id="uname"></span><span class="chip-badge" id="chipBadge"></span></button>
+    <div class="usermenu" id="userMenu">
+      <div class="um-head"><b id="umName"></b><span class="rolebadge" id="umRole"></span></div>
+      <button class="um-item" id="umAdmin" data-i18n="adminPanel"></button>
+      <button class="um-item" id="umActivity" data-perm="viewActivity" data-i18n="activity"></button>
+      <button class="um-item" id="umUsers" data-perm="manageUsers" data-i18n="users"></button>
+      <button class="um-item" id="umTrash" data-perm="viewTrash" data-i18n="trash"></button>
+      <button class="um-item danger" id="umSignout" data-i18n="signOut"></button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="view active" id="libraryView">
+    <div class="lib-head"><button class="back" data-home style="margin-bottom:10px"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="back"></span></button><div class="eyebrow" id="libEyebrow" data-i18n="amanat"></div><h2 data-i18n="libTitle"></h2><div class="count" id="libCount"></div></div>
+    <div class="toolbar">
+      <div class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="libSearch" data-ph="searchBooks"></div>
+      <div class="select-wrap"><select id="sortSel">
+        <option value="modified" data-i18n="sortModified"></option>
+        <option value="created" data-i18n="sortCreated"></option>
+        <option value="name" data-i18n="sortName"></option>
+        <option value="pages" data-i18n="sortPages"></option></select></div>
+      <div class="select-wrap"><select id="filterSel">
+        <option value="all" data-i18n="filterAll"></option>
+        <option value="active" data-i18n="filterActive"></option>
+        <option value="new" data-i18n="filterNew"></option></select></div>
+    </div>
+    <div class="grid" id="bookGrid"></div>
+  </section>
+
+  <section class="view" id="readerView">
+    <div class="reader-bar">
+      <button class="back" id="backBtn"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="library"></span></button>
+      <div class="reader-title"><div class="rt" id="readerTitle"></div><div class="rc" id="readerCount"></div></div>
+      <div class="reader-tools">
+        <button class="btn btn-ghost reader-index-btn" id="indexBtn" data-title="bookIndex"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span class="idx-label" data-i18n="bookIndex"></span></button>
+        <div class="psearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="pageSearch" data-ph="searchPages" autocomplete="off"><div class="results" id="pageResults" style="display:none"></div></div>
+        <div class="jump"><label data-i18n="goTo"></label><input id="jumpInput" type="number" min="1" placeholder="#"><button id="jumpBtn" data-i18n="jump"></button></div>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="pagesheet" id="pageSheet">
+        <div class="stack-tabs" id="stackTabs" aria-label="attached pages"></div>
+        <div class="pageface" id="pageFace"></div>
+        <button class="note-peek" id="notePeek" aria-label="notes"><svg viewBox="0 0 24 24"><path d="M4 4h16v12l-4 4H4z"/><path d="M16 20v-4h4"/></svg><span class="np-count" id="npCount">0</span></button>
+        <button class="ref-peek" id="refPeek" aria-label="reference"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15l5-4 4 3 4-4 5 4"/><circle cx="8.5" cy="8.5" r="1.5"/></svg><span class="np-count" id="rpCount">0</span></button>
+      </div>
+    </div>
+    <div class="reader-dock">
+      <div class="nav-row">
+        <button class="nav-btn" id="firstBtn" data-title="first"><svg viewBox="0 0 24 24"><path d="M18 17l-5-5 5-5M11 17l-5-5 5-5"/></svg></button>
+        <button class="nav-btn" id="prevBtn" data-title="prev"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <div class="pageind" id="pageInd"></div>
+        <button class="nav-btn" id="nextBtn" data-title="next"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+        <button class="nav-btn" id="lastBtn" data-title="last"><svg viewBox="0 0 24 24"><path d="M6 17l5-5-5-5M13 17l5-5-5-5"/></svg></button>
+      </div>
+      <div class="page-edit">
+        <button class="mini" id="addPageBtn" data-i18n="newPage"></button>
+        <button class="mini" id="addStackPageBtn" data-i18n="addStackPage"></button>
+        <button class="ledger-btn add" id="txnAddBtn"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="addTxn"></span></button>
+        <button class="ledger-btn ded" id="txnDedBtn"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg><span data-i18n="deductTxn"></span></button>
+        <button class="mini" id="notePageBtn" data-i18n="noteBtn"></button>
+        <button class="mini" id="renamePageBtn" data-i18n="editAttachedPage"></button>
+        <button class="mini danger" id="deletePageBtn" data-i18n="delPage"></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="activityView">
+    <div class="reader-bar">
+      <button class="back" id="actBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="backLib"></span></button>
+      <div class="reader-title"><div class="rt" data-i18n="activityTitle"></div><div class="rc" data-i18n="activitySub"></div></div>
+    </div>
+    <div class="activity-wrap">
+      <div class="activity-summary" id="activitySummary"></div>
+      <div class="activity-toolbar">
+        <div class="search act-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="actSearch" data-ph="activitySearch" autocomplete="off"></div>
+        <div class="act-period" id="actPeriod">
+          <button class="on" data-ap="all" data-i18n="allTime"></button>
+          <button data-ap="today" data-i18n="todayLbl"></button>
+          <button data-ap="7" data-i18n="last7"></button>
+          <button data-ap="30" data-i18n="last30"></button>
+        </div>
+        <div class="select-wrap"><select class="act-select" id="actYear"></select></div>
+        <div class="select-wrap"><select class="act-select" id="actMonth"></select></div>
+        <button class="btn btn-ghost act-sort" id="actSort"></button>
+      </div>
+      <div class="log-list" id="logList"></div>
+    </div>
+  </section>
+
+  <section class="view" id="usersView">
+    <div class="reader-bar">
+      <button class="back" id="usrBack"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="backLib"></span></button>
+      <div class="reader-title"><div class="rt" data-i18n="usersTitle"></div><div class="rc" data-i18n="usersSub"></div></div>
+      <button class="btn btn-primary" id="newAcctBtn"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="lbl" data-i18n="newAccount"></span></button>
+    </div>
+    <div class="user-grid" id="userGrid"></div>
+  </section>
+
+  <section class="view" id="homeView">
+    <div class="home-wrap">
+      <div class="home-eyebrow" data-i18n="appHome"></div>
+      <div class="home-grid">
+        <button class="home-btn" data-go="hawala" data-perm="accessHawala"><span class="hb-ic"><svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg></span><span class="hb-t" data-i18n="hawala"></span><span class="hb-d" data-i18n="hawalaDesc"></span></button>
+        <button class="home-btn" data-go="amanat" data-perm="accessAmanat"><span class="hb-ic"><svg viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 016.5 3H20v15H6.5A2.5 2.5 0 004 20.5zM4 20.5A2.5 2.5 0 016.5 18H20v3H6.5A2.5 2.5 0 014 20.5z"/></svg></span><span class="hb-t" data-i18n="amanat"></span><span class="hb-d" data-i18n="amanatDesc"></span></button>
+        <button class="home-btn" data-go="hisab" data-perm="accessHisab"><span class="hb-ic"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h8M8 15h4"/></svg></span><span class="hb-t" data-i18n="hisab"></span><span class="hb-d" data-i18n="hisabDesc"></span></button>
+        <button class="home-btn" data-go="notes" data-perm="accessNotes"><span class="hb-ic"><svg viewBox="0 0 24 24"><path d="M4 4h16v12l-4 4H4z"/><path d="M16 20v-4h4"/><path d="M8 9h8M8 13h5"/></svg></span><span class="hb-t" data-i18n="notesHome"></span><span class="hb-d" data-i18n="notesHomeDesc"></span></button>
+        <button class="home-btn" data-go="stock" data-perm="accessStock"><span class="hb-ic"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg></span><span class="hb-t" data-i18n="stock"></span><span class="hb-d" data-i18n="stockDesc"></span></button>
+        <button class="home-btn" data-go="sales" data-perm="accessSales"><span class="hb-ic"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 6-8"/><path d="M14 6h4v4"/><path d="M3 21h18"/></svg></span><span class="hb-t" data-i18n="salesT"></span><span class="hb-d" data-i18n="salesDesc"></span></button>
+        <button class="home-btn dash-tile" data-go="dash" data-perm="accessDashboard"><span class="hb-ic"><svg viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg></span><span class="hb-t" data-i18n="dashT"></span><span class="hb-d" data-i18n="dashDesc"></span></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="hawalaHomeView">
+    <div class="reader-bar"><button class="back" data-home><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="back"></span></button>
+      <div class="reader-title"><div class="rt" data-i18n="hawala"></div><div class="rc" data-i18n="hawalaDesc"></div></div></div>
+    <div class="two-grid">
+      <button class="big-tile" id="btnNewHawala" data-perm="hawalaCreate"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><b data-i18n="newHawala"></b></button>
+      <button class="big-tile" id="btnManageHawala"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg><b data-i18n="manageHawala"></b></button>
+      <button class="big-tile" id="btnHawalaAccounting"><svg viewBox="0 0 24 24"><path d="M4 3h16v18H4z"/><path d="M4 8h16M9 8v13M15 8v13M4 13h16M4 17h16"/></svg><b data-i18n="hawalaAccounting"></b></button>
+      <button class="big-tile" id="btnHawalaNotes"><svg viewBox="0 0 24 24"><path d="M4 4h16v12l-4 4H4z"/><path d="M16 20v-4h4"/><path d="M8 9h8M8 13h5"/></svg><b data-i18n="hawalaNotes"></b></button>
+    </div>
+  </section>
+
+  <section class="view" id="hawalaNewView">
+    <div class="reader-bar"><button class="back" data-hawalahome><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="hawala"></span></button>
+      <div class="reader-title"><div class="rt" data-i18n="newHawala"></div><div class="rc mono" id="hwIdShow"></div></div></div>
+    <div class="hw-form">
+      <button class="btn btn-primary photo-top" id="takePhotoBtn"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><span data-i18n="takePhotoBtn"></span></button>
+      <div class="hw-row2">
+        <div class="field"><label data-i18n="hawalaId"></label><input id="hwId" readonly class="mono"></div>
+        <div class="field"><label data-i18n="dateLbl"></label><input id="hwDate" type="date"></div>
+      </div>
+      <div class="hawala-flow-note" data-i18n="hawalaFlowHint"></div>
+      <div class="hw-entry-grid">
+        <div class="field hw-customer-name"><label data-i18n="giverName"></label><input id="hwSName" autocomplete="off"></div>
+        <div class="field hw-receiver-name"><label data-i18n="receiverName"></label><input id="hwRName" autocomplete="off"></div>
+        <div class="field hw-aed-amount"><label data-i18n="givingAmount"></label><div class="money-input"><input id="hwSNum" inputmode="decimal" autocomplete="off"><span class="money-code">AED</span></div></div>
+        <div class="field hw-payout-amount"><label data-i18n="receivingAmount"></label><div class="money-input"><input id="hwRNum" inputmode="decimal" autocomplete="off"><span class="money-code" id="hwPayoutCode">—</span></div></div>
+      </div>
+      <div class="field">
+        <label class="hw-field-label"><span data-i18n="receiverCurrency"></span></label>
+        <div class="hw-currency" id="hwRCurrency">
+          <button type="button" class="cur-btn" data-cur="PKR"><span data-i18n="currencyKaldari"></span><small>PKR</small></button>
+          <button type="button" class="cur-btn" data-cur="AFN"><span data-i18n="currencyAfghani"></span><small>AFN</small></button>
+        </div>
+        <small class="required-note" data-i18n="currencyRequiredHint"></small>
+      </div>
+      <div class="hw-status">
+        <button class="seg on" id="segUnpaid" data-i18n="unpaid"></button>
+        <button class="seg" id="segPaid" data-i18n="paid"></button>
+      </div>
+      <div class="hw-save"><button class="btn btn-primary big" id="saveHawalaBtn" data-i18n="saveHawala"></button></div>
+    </div>
+  </section>
+
+  <section class="view" id="hawalaManageView">
+    <div class="reader-bar"><button class="back" data-hawalahome><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="hawala"></span></button>
+      <div class="reader-title"><div class="rt" data-i18n="manageHawala"></div><div class="rc" id="hwCount"></div></div></div>
+    <div class="hw-summary" id="hwSummary"></div>
+    <div class="hw-summary hw-money-summary" id="hwMoneySummary" hidden></div>
+    <div class="hw-date-tools">
+      <div class="seg chips-seg" id="hwPeriodMode">
+        <button class="seg-b on" data-hp="all" data-i18n="allTime"></button>
+        <button class="seg-b" data-hp="today" data-i18n="todayLbl"></button>
+        <button class="seg-b" data-hp="date" data-i18n="specificDate"></button>
+        <button class="seg-b" data-hp="month" data-i18n="wholeMonth"></button>
+        <button class="seg-b" data-hp="year" data-i18n="wholeYear"></button>
+      </div>
+      <div class="hw-date-inputs">
+        <label class="hw-date-field" id="hwDateField"><span data-i18n="specificDate"></span><input type="date" id="hwDatePick"></label>
+        <label class="hw-date-field" id="hwMonthField"><span data-i18n="wholeMonth"></span><input type="month" id="hwMonthPick"></label>
+        <label class="hw-date-field" id="hwYearField"><span data-i18n="wholeYear"></span><select id="hwYearPick"></select></label>
+        <select class="hw-sort-select" id="hwDateSort"><option value="new" data-i18n="activityNewest"></option><option value="old" data-i18n="activityOldest"></option></select>
+      </div>
+    </div>
+    <div class="ctrl-bar">
+      <div class="ctrl-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="hwSearch" data-ph="searchHawalaPh"></div>
+      <div class="seg chips-seg" id="hwViewMode">
+        <button class="seg-b" data-v="list" title="List"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
+        <button class="seg-b on" data-v="grid" title="Gallery"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+      </div>
+    </div>
+    <div id="hwManageList"></div>
+  </section>
+
+  <section class="view" id="hawalaAccountingLibraryView">
+    <div class="lib-head ha-lib-head">
+      <button class="back" data-hawalahome style="margin-bottom:10px"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="hawala"></span></button>
+      <h2 data-i18n="hawalaAccounting"></h2>
+      <div class="count" id="haLibCount"></div>
+    </div>
+    <div class="ha-library-content">
+      <div class="grid ha-library-grid" id="haLibraryGrid">
+        <div class="book" id="haOpenBook" tabindex="0" style="animation-delay:0ms">
+          <div class="cover" style="background:linear-gradient(150deg,#2f5dd0,#1d3a86)">
+            <div class="spine"></div>
+            <div class="label"><div class="id">HB001</div><div class="t" data-i18n="hawalaBook"></div><div class="yr" id="haBookYear"></div></div>
+            <div class="chip" id="haBookPageChip"></div>
+          </div>
+          <div class="book-meta"><div class="bt" data-i18n="hawalaBook"></div><div class="bd" id="haBookMeta"></div></div>
+        </div>
+      </div>
+      <div class="home-grid ha-library-actions">
+        <button class="home-btn" id="haOpenCalc" type="button">
+          <span class="hb-ic"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2m4 0h2M8 15h2m4 0h2M8 19h8"/></svg></span>
+          <span class="hb-t" data-i18n="calculateHawala"></span>
+          <span class="hb-d" data-i18n="calculateSelectedPagesDesc"></span>
+        </button>
+        <button class="home-btn" id="haOpenCash" type="button">
+          <span class="hb-ic"><svg viewBox="0 0 24 24"><path d="M3 7h18v11H3z"/><path d="M7 11h5M7 15h3M17 10v5"/><path d="M5 7V5h14v2"/></svg></span>
+          <span class="hb-t" data-i18n="cashSoldHistory"></span>
+          <span class="hb-d" data-i18n="cashSoldDesc"></span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="hawalaAccountingView">
+    <div class="reader-bar">
+      <button class="back" id="haBookBack" type="button"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="hawalaAccounting"></span></button>
+      <div class="reader-title"><div class="rt" data-i18n="hawalaBook"></div><div class="rc" id="haCount"></div></div>
+    </div>
+    <div class="ha-book">
+      <div class="ha-scroll"><div id="haSheetHost"></div></div>
+      <div class="ha-nav">
+        <button class="nav-btn" id="haFirst" data-title="first"><svg viewBox="0 0 24 24"><path d="M11 18l-6-6 6-6M19 18l-6-6 6-6"/></svg></button>
+        <button class="nav-btn" id="haPrev" data-title="prev"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+        <div class="pageind" id="haPageInd"></div>
+        <button class="nav-btn" id="haNext" data-title="next"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+        <button class="nav-btn" id="haLast" data-title="last"><svg viewBox="0 0 24 24"><path d="M13 18l6-6-6-6M5 18l6-6-6-6"/></svg></button>
+        <span class="ha-nav-sep" aria-hidden="true"></span>
+        <button class="ha-page-action" id="haSavePageImage" type="button" data-title="savePageImage"><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M5 19h14"/></svg><span data-i18n="savePageImage"></span></button>
+        <button class="ha-page-action" id="haSharePageImage" type="button" data-title="sharePageImage"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="18" cy="19" r="2"/><path d="M8 11l8-5M8 13l8 5"/></svg><span data-i18n="sharePageImage"></span></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="hawalaCashHistoryView">
+    <div class="reader-bar">
+      <button class="back" id="haCashBack" type="button"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="hawalaAccounting"></span></button>
+      <div class="reader-title"><div class="rt" data-i18n="cashSoldHistory"></div><div class="rc" id="haCashViewCount"></div></div>
+      <div class="reader-tools"><button class="mini" id="haCashAdd" type="button" data-perm="hawalaAccountingEdit"><span data-i18n="calculateHawala"></span></button></div>
+    </div>
+    <div class="ha-tool-wrap ha-cash-history-view">
+      <div class="ha-cash-toolbar">
+        <div class="seg chips-seg" id="haCashPeriodMode">
+          <button class="seg-b on" data-cp="all" data-i18n="allTime"></button>
+          <button class="seg-b" data-cp="today" data-i18n="todayLbl"></button>
+          <button class="seg-b" data-cp="date" data-i18n="specificDate"></button>
+          <button class="seg-b" data-cp="month" data-i18n="wholeMonth"></button>
+          <button class="seg-b" data-cp="year" data-i18n="wholeYear"></button>
+        </div>
+        <div class="ha-cash-filter-row">
+          <label class="ha-cash-date-field" id="haCashDateField"><span data-i18n="specificDate"></span><input type="date" id="haCashDatePick"></label>
+          <label class="ha-cash-date-field" id="haCashMonthField"><span data-i18n="wholeMonth"></span><input type="month" id="haCashMonthPick"></label>
+          <label class="ha-cash-date-field" id="haCashYearField"><span data-i18n="wholeYear"></span><select id="haCashYearPick"></select></label>
+          <div class="ctrl-search ha-cash-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="haCashSearch" data-ph="cashHistorySearchPh" autocomplete="off"></div>
+          <select class="hw-sort-select" id="haCashGroup"><option value="day" data-i18n="groupByDay"></option><option value="month" data-i18n="groupByMonth"></option><option value="year" data-i18n="groupByYear"></option><option value="none" data-i18n="noGrouping"></option></select>
+          <select class="hw-sort-select" id="haCashSort"><option value="new" data-i18n="activityNewest"></option><option value="old" data-i18n="activityOldest"></option><option value="aedHigh" data-i18n="sortAedHigh"></option><option value="aedLow" data-i18n="sortAedLow"></option><option value="rateHigh" data-i18n="sortRateHigh"></option><option value="profitHigh" data-i18n="sortProfitHigh"></option></select>
+        </div>
+      </div>
+      <div class="ha-cash-period-label" id="haCashPeriodLabel"></div>
+      <div class="ha-cash-register-total" id="haCashRegisterTotal"></div>
+      <div id="haCashSummary" hidden></div>
+      <div id="haCashInsights" hidden></div>
+      <section><div class="ha-cash-list" id="haCashHistoryList"></div></section>
+    </div>
+  </section>
+
+  <section class="view" id="hawalaNotesView">
+    <div class="reader-bar"><button class="back" data-hawalahome><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="hawala"></span></button>
+      <div class="reader-title"><div class="rt" data-i18n="hawalaNotes"></div><div class="rc" data-i18n="hawalaNotesDesc"></div></div>
+      <div class="reader-tools">
+        <button class="mini" id="hwnAddText" data-perm="hawalaNotes" data-i18n="addTextNote"></button>
+        <button class="mini" id="hwnAddPhoto" data-perm="hawalaNotes" data-i18n="addImgNote"></button>
+      </div>
+    </div>
+    <div class="notes-board" id="hawalaNotesBoard"></div>
+  </section>
+
+  <section class="view" id="notesBoardView">
+    <div class="reader-bar"><button class="back" data-home><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="back"></span></button>
+      <div class="reader-title"><div class="rt" data-i18n="notesHome"></div><div class="rc" data-i18n="notesHomeDesc"></div></div>
+      <div class="reader-tools">
+        <button class="mini" id="nbAddText" data-perm="notesManage" data-i18n="addTextNote"></button>
+        <button class="mini" id="nbAddPhoto" data-perm="notesManage" data-i18n="addImgNote"></button>
+      </div>
+    </div>
+    <div class="notes-board" id="notesBoard"></div>
+  </section>
+
+  <section class="view" id="stockView">
+    <div class="reader-bar"><button class="back" data-home><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="back"></span></button>
+      <div class="reader-title"><div class="rt" data-i18n="stock"></div><div class="rc" id="stockCount"></div></div>
+      <div class="reader-tools"><button class="btn btn-primary" id="newProdBtn" data-perm="stockProducts"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="lbl" data-i18n="newProduct"></span></button></div>
+    </div>
+    <div class="prod-grid" id="prodGrid"></div>
+  </section>
+
+  <section class="view" id="salesView">
+    <div class="reader-bar"><button class="back" data-home><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="back"></span></button>
+      <div class="reader-title"><div class="rt" data-i18n="salesT"></div><div class="rc" id="salesCount"></div></div>
+      <div class="reader-tools"><button class="btn btn-primary" id="newSaleBtn" data-perm="salesCreate"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span class="lbl" data-i18n="newSale"></span></button></div>
+    </div>
+    <div class="hw-summary sales-summary" id="salesSummary"></div>
+    <div class="ctrl-bar">
+      <div class="ctrl-search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="slSearch" data-ph="searchSalePh"></div>
+      <div class="seg chips-seg" id="slPeriod">
+        <button class="seg-b on" data-p="7" data-i18n="last7"></button>
+        <button class="seg-b" data-p="30" data-i18n="last30"></button>
+        <button class="seg-b" data-p="90" data-i18n="p90"></button>
+        <button class="seg-b" data-p="all" data-i18n="fAll"></button>
+      </div>
+    </div>
+    <div id="salesList"></div>
+  </section>
+
+  <section class="view" id="dashView">
+    <div class="reader-bar"><button class="back" data-home><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="back"></span></button>
+      <div class="reader-title"><div class="rt" data-i18n="dashT"></div><div class="rc" id="dashSub"></div></div>
+    </div>
+    <div class="admin-wrap" id="dashBody"></div>
+  </section>
+
+  <section class="view" id="adminView">
+    <div class="reader-bar"><button class="back" data-home><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="back"></span></button>
+      <div class="reader-title"><div class="rt" data-i18n="adminPanel"></div><div class="rc" id="adminSub"></div></div>
+    </div>
+    <div class="admin-wrap">
+      <div class="admin-stats" id="adminStats"></div>
+      <div class="admin-section">
+        <div class="admin-h"><span data-i18n="pendingApprovals"></span> <span class="secn" id="apCount"></span></div>
+        <div id="adminApprovals"></div>
+      </div>
+      <div class="admin-section">
+        <div class="admin-h" data-i18n="permissionsTitle"></div>
+        <div class="perm-intro" data-i18n="permissionsSub"></div>
+        <div class="perm-actions"><button class="btn btn-ghost sm" id="permReset" data-i18n="resetPermissions"></button></div>
+        <div id="permissionMatrix"></div>
+        <div class="perm-power" data-i18n="permissionsWarning"></div>
+      </div>
+      <div class="admin-section" id="backupSection">
+        <div class="admin-h"><span data-i18n="backupStorageTitle"></span><span class="backup-overall" id="backupOverall"></span></div>
+        <div class="backup-intro" data-i18n="backupStorageSub"></div>
+        <div id="backupCenter"></div>
+        <input type="file" id="backupImportInput" accept="application/json,.json" style="display:none">
+      </div>
+      <div class="admin-section" id="updateSection">
+        <div class="admin-h"><span data-i18n="updateCenterTitle"></span><span class="backup-overall ok" id="updateVersionBadge"></span></div>
+        <div class="update-intro" data-i18n="updateCenterSub"></div>
+        <div id="updateCenter"></div>
+        <input type="file" id="appUpdateInput" accept="text/html,.html,.htm" style="display:none">
+      </div>
+      <div class="admin-section">
+        <div class="admin-h" data-i18n="quickLinks"></div>
+        <div class="admin-links">
+          <button class="admin-link" id="alUsers"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg><span data-i18n="users"></span></button>
+          <button class="admin-link" id="alTrash"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg><span data-i18n="trash"></span></button>
+          <button class="admin-link" id="alActivity"><svg viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg><span data-i18n="activity"></span></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="trashView">
+    <div class="reader-bar"><button class="back" data-home><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span data-i18n="back"></span></button>
+      <div class="reader-title"><div class="rt" data-i18n="trashTitle"></div><div class="rc" data-i18n="trashSub"></div></div></div>
+    <div class="trash-list" id="trashList"></div>
+  </section>
+</main>
+
+<input type="file" id="fileInput" accept="image/*" multiple style="display:none">
+<input type="file" id="noteFileInput" accept="image/*" multiple style="display:none">
+<input type="file" id="apNoteImgInput" accept="image/*" multiple style="display:none">
+<input type="file" id="apRefImgInput" accept="image/*" multiple style="display:none">
+<input type="file" id="refFileInput" accept="image/*" multiple style="display:none">
+<input type="file" id="nbFileInput" accept="image/*" multiple style="display:none">
+<input type="file" id="hwnFileInput" accept="image/*" multiple style="display:none">
+
+<div class="scrim" id="hwnEditModal"><div class="modal">
+  <div class="mh"><div class="eyebrow" data-i18n="hawalaNotes"></div><h3 id="hwnEditTitle"></h3></div>
+  <div class="mb">
+    <div class="field" id="hwnTextField"><label data-i18n="noteOpt"></label><textarea id="hwnEditText" style="min-height:130px" data-ph="writeNote"></textarea></div>
+    <div class="field"><label data-i18n="dateLbl"></label><input type="date" id="hwnEditDate"></div>
+    <div class="info" id="hwnImageInfo" style="display:none"></div>
+  </div>
+  <div class="mf"><button class="btn btn-ghost" data-close data-i18n="cancel"></button><button class="btn btn-primary" id="hwnEditSave" data-i18n="noteEditSave"></button></div>
+</div></div>
+
+<div class="scrim" id="nbEditModal"><div class="modal">
+  <div class="mh"><div class="eyebrow" data-i18n="notesHome"></div><h3 id="nbEditTitle"></h3></div>
+  <div class="mb">
+    <div class="field" id="nbTextField"><textarea id="nbEditText" style="min-height:130px" data-ph="writeNote"></textarea></div>
+    <div class="field" id="nbEditDateField"><label data-i18n="dateLbl"></label><input type="date" id="nbEditDate"></div>
+    <div class="info" id="nbImageInfo" style="display:none"></div>
+  </div>
+  <div class="mf"><button class="btn btn-ghost" data-close data-i18n="cancel"></button><button class="btn btn-primary" id="nbEditSave" data-i18n="noteEditSave"></button></div>
+</div></div>
+
+<div class="scrim" id="prodModal"><div class="modal prod-modal">
+  <div class="notes-head"><div class="notes-title" id="pmName"></div><button class="ic-x" id="pmClose">×</button></div>
+  <div class="pm-body">
+    <div class="pm-origin" id="pmOrigin"></div>
+    <div class="pm-stats" id="pmStats"></div>
+    <div class="pm-actions">
+      <button class="ledger-btn add" id="stAddBtn"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="addStock"></span></button>
+      <button class="ledger-btn ded" id="stRedBtn"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg><span data-i18n="reduceStock"></span></button>
+      <button class="mini" id="prodEditBtn" data-i18n="editNote"></button>
+      <button class="mini danger" id="prodDelBtn" data-i18n="delNote"></button>
+    </div>
+    <div class="pm-moves-title" data-i18n="movements"></div>
+    <div class="pm-moves" id="pmMoves"></div>
+    <div class="pm-moves-title" style="margin-top:14px" data-i18n="imagesLbl"></div>
+    <div class="pm-imgs" id="pmImgs"></div>
+    <div class="pm-moves-title" style="margin-top:14px" data-i18n="stockDoc"></div>
+    <div class="pm-doc" id="pmDoc"></div>
+  </div>
+</div></div>
+<input type="file" id="prodDocInput" accept="image/*" style="display:none">
+<input type="file" id="prodImgsInput" accept="image/*" multiple style="display:none">
+
+<input type="file" id="peDocInput" accept="image/*" style="display:none">
+
+<div class="scrim" id="stockTxnModal"><div class="modal" id="stockTxnBox">
+  <div class="mh"><div class="eyebrow" data-i18n="stock"></div><h3 id="stTitle"></h3></div>
+  <div class="mb">
+    <div class="hw-row2">
+      <div class="field"><label data-i18n="rollsLbl"></label><input id="stRolls" inputmode="numeric" placeholder="—"></div>
+      <div class="field"><label data-i18n="outcutLbl"></label><input id="stOutcut" inputmode="numeric" placeholder="—"></div>
+    </div>
+    <div class="hw-row2">
+      <div class="field"><label data-i18n="cartonsLbl"></label><input id="stCartons" inputmode="numeric" placeholder="—"></div>
+      <div class="field"><label data-i18n="yardsLbl"></label><input id="stYards" inputmode="decimal" placeholder="—"></div>
+    </div>
+    <div class="st-meters" id="stMeters"></div>
+    <div class="hw-row2">
+      <div class="field"><label data-i18n="colReason"></label><input id="stReason"></div>
+      <div class="field"><label data-i18n="dateLbl"></label><input type="date" id="stMoveDate"></div>
+    </div>
+  </div>
+  <div class="mf"><button class="btn btn-ghost" data-close data-i18n="cancel"></button><button class="btn btn-primary" id="stSave" data-i18n="noteEditSave"></button></div>
+</div></div>
+
+<div class="scrim" id="saleModal"><div class="modal">
+  <div class="mh"><div class="eyebrow" data-i18n="salesT"></div><h3 data-i18n="newSale"></h3></div>
+  <div class="mb">
+    <div class="field"><label data-i18n="productName"></label><input id="slName"></div>
+    <div class="hw-row2">
+      <div class="field"><label data-i18n="qtyLbl"></label><input id="slQty" inputmode="decimal" placeholder="0"></div>
+      <div class="field"><label data-i18n="salePrice"></label><input id="slPrice" inputmode="decimal" placeholder="0"></div>
+    </div>
+    <div class="field"><label data-i18n="dateLbl"></label><input type="date" id="slDate"></div>
+  </div>
+  <div class="mf"><button class="btn btn-ghost" data-close data-i18n="cancel"></button><button class="btn btn-primary" id="slSave" data-i18n="registerSale"></button></div>
+</div></div>
+
+<div class="scrim" id="prodEditModal"><div class="modal">
+  <div class="mh"><div class="eyebrow" data-i18n="stock"></div><h3 id="peTitle"></h3></div>
+  <div class="mb">
+    <div class="field"><label data-i18n="productName"></label><input id="peName"></div>
+    <div class="field"><label data-i18n="originLbl"></label><input id="peOrigin" data-ph="originPh"></div>
+    <div class="field"><label data-i18n="dateLbl"></label><input type="date" id="peDate"></div>
+    <div class="hw-row2">
+      <div class="field"><label data-i18n="rollsLbl"></label><input id="peRolls" inputmode="numeric" placeholder="—"></div>
+      <div class="field"><label data-i18n="outcutLbl"></label><input id="peOutcut" inputmode="numeric" placeholder="—"></div>
+    </div>
+    <div class="hw-row2">
+      <div class="field"><label data-i18n="cartonsLbl"></label><input id="peCartons" inputmode="numeric" placeholder="—"></div>
+      <div class="field"><label data-i18n="yardsLbl"></label><input id="peYards" inputmode="decimal" placeholder="—"></div>
+    </div>
+    <div id="peAdminOpt">
+    <div class="hw-row2">
+      <div class="field"><label data-i18n="costPrice"></label><input id="peCost" inputmode="decimal" placeholder="—"></div>
+      <div class="field"><label data-i18n="unitPrice"></label><input id="peUnitPrice" inputmode="decimal" placeholder="—"></div>
+    </div>
+    <div class="field"><label data-i18n="costUnit"></label>
+      <div class="seg" id="peCostUnit"><button type="button" class="seg-b on" data-unit="yard" data-i18n="perYard"></button><button type="button" class="seg-b" data-unit="meter" data-i18n="perMeter"></button></div>
+    </div>
+    <button class="drop dropmini" id="peDocBtn"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15l5-4 4 3 4-4 5 4"/><circle cx="8.5" cy="8.5" r="1.5"/></svg><b data-i18n="addDocOpt"></b></button>
+    <div class="thumbs editthumbs" id="peDocThumb"></div>
+    <div class="field"><label data-i18n="docNoteLbl"></label><textarea id="peDocNote" style="min-height:48px"></textarea></div>
+    </div>
+  </div>
+  <div class="mf"><button class="btn btn-ghost" data-close data-i18n="cancel"></button><button class="btn btn-primary" id="peSave" data-i18n="noteEditSave"></button></div>
+</div></div>
+<input type="file" id="coverFileInput" accept="image/*" style="display:none">
+<input type="file" id="hwPhotoInput" accept="image/*" capture="environment" style="display:none">
+
+<div class="scrim" id="hwCrop"><div class="modal">
+  <div class="mh"><div class="eyebrow" data-i18n="modePhoto"></div><h3 data-i18n="cropSave"></h3></div>
+  <div class="mb"><div class="cropwrap" id="cropwrap"><img id="cropImg" alt=""><div class="cropsel" id="cropsel"><i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i></div></div></div>
+  <div class="mf" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+    <button class="btn btn-ghost" id="cropRetake" data-i18n="retake"></button>
+    <span style="display:flex;gap:8px"><button class="btn btn-ghost" id="cropFull" data-i18n="useFull"></button><button class="btn btn-primary" id="cropSave" data-i18n="cropSave"></button></span>
+  </div>
+</div></div>
+
+<div class="scrim" id="hwPreview"><div class="modal">
+  <div class="mh"><div class="eyebrow" data-i18n="preview"></div><h3 id="hwpTitle" class="mono"></h3></div>
+  <div class="mb"><img id="hwpImg" class="hwp-img" alt=""></div>
+  <div class="mf" style="justify-content:space-between">
+    <button class="btn btn-ghost" id="hwpBack" data-i18n="backHome"></button>
+    <button class="btn btn-primary" id="hwpShare"><svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2"><path d="M4 12a8 8 0 108-8 8 8 0 00-7 4M4 4v4h4"/><path d="M9 10a5 5 0 005 5"/></svg><span data-i18n="shareWA"></span></button>
+  </div>
+</div></div>
+
+<div class="scrim" id="hwStatusModal"><div class="modal" style="max-width:420px">
+  <div class="mh"><div class="eyebrow" data-i18n="hawala"></div><h3 data-i18n="chooseStatus"></h3></div>
+  <div class="mb">
+    <div class="status-pick">
+      <button class="spk unpaid" id="pickUnpaid"><span class="spk-dot"></span><b data-i18n="unpaid"></b><small data-i18n="unpaidHint"></small></button>
+      <button class="spk paid" id="pickPaid"><span class="spk-dot"></span><b data-i18n="paid"></b><small data-i18n="paidHint"></small></button>
+    </div>
+  </div>
+  <div class="mf"><button class="btn btn-ghost" data-close data-i18n="cancel"></button></div>
+</div></div>
+
+<div class="scrim" id="haFinanceLockModal"><div class="modal ha-finance-lock-modal">
+  <div class="mh"><div class="eyebrow" data-i18n="hawalaAccounting"></div><h3 data-i18n="financeUnlockTitle"></h3><p data-i18n="financeUnlockDesc"></p></div>
+  <div class="mb">
+    <div class="field"><label data-i18n="password"></label><input id="haFinancePass" type="password" autocomplete="current-password"></div>
+    <div class="ha-lock-error" id="haFinanceError"></div>
+  </div>
+  <div class="mf"><button class="btn btn-ghost" data-close data-i18n="cancel"></button><button class="btn btn-primary" id="haFinanceUnlock" type="button" data-i18n="unlock"></button></div>
+</div></div>
+
+<div class="scrim" id="haCalcModal"><div class="modal ha-calc-modal">
+  <div class="mh"><div class="eyebrow" data-i18n="hawalaAccounting"></div><h3 data-i18n="calculateHawala"></h3><p data-i18n="liveHawalaCalcDesc"></p></div>
+  <div class="mb">
+    <div id="haBalanceValidation"></div>
+    <div id="haCurrentBalance"></div>
+    <section class="ha-sale-workflow" id="haSaleWorkflow">
+      <div class="ha-sale-workflow-head"><div><b data-i18n="sellHawalaCash"></b><span data-i18n="sellHawalaCashDesc"></span></div><button class="mini" id="haUseFullBalance" type="button" data-i18n="useFullBalance"></button></div>
+      <div class="ha-form-grid">
+        <div class="field"><label data-i18n="dateLbl"></label><input id="haSellDate" type="date"></div>
+        <div class="field"><label data-i18n="amountToSell"></label><div class="money-input"><input id="haSellAed" inputmode="decimal" autocomplete="off"><span class="money-code">AED</span></div></div>
+        <div class="field"><label data-i18n="saleRate"></label><div class="money-input"><input id="haSellRate" inputmode="decimal" autocomplete="off"><span class="money-code">PKR/AED</span></div></div>
+        <div class="field"><label data-i18n="fromName"></label><input id="haSellFrom" autocomplete="off"></div>
+        <div class="field"><label data-i18n="toName"></label><input id="haSellTo" autocomplete="off"></div>
+        <div class="field span2"><label data-i18n="noteOpt"></label><textarea id="haSellNote"></textarea></div>
+        <div class="field span2"><label data-i18n="saleProofImage"></label>
+          <div class="ha-proof-picker">
+            <button class="btn btn-ghost" id="haSellImageBtn" type="button" data-i18n="uploadProofImage"></button>
+            <span id="haSellImageStatus" data-i18n="noProofImage"></span>
+            <button class="mini danger" id="haSellImageRemove" type="button" data-i18n="removeImage" hidden></button>
+          </div>
+          <div class="ha-proof-preview" id="haSellImagePreview" hidden><img id="haSellImagePreviewImg" alt=""></div>
+          <input id="haSellImageInput" type="file" accept="image/*" style="display:none">
+        </div>
+      </div>
+      <div id="haSalePreview"></div>
+    </section>
+  </div>
+  <div class="mf"><button class="btn btn-ghost" data-close data-i18n="close"></button><button class="btn btn-primary" id="haSellFinalize" type="button" data-i18n="finalizeSale"></button></div>
+</div></div>
+
+<div class="scrim" id="haCashModal"><div class="modal ha-cash-modal">
+  <div class="mh"><div class="eyebrow" data-i18n="cashSoldHistory"></div><h3 id="haCashModalTitle" data-i18n="saleDetail"></h3></div>
+  <div class="mb" id="haCashDetailBody"></div>
+  <div class="mf" style="justify-content:space-between"><button class="btn btn-danger" id="haCashDetailDelete" type="button" data-i18n="del"></button><button class="btn btn-primary" data-close data-i18n="close"></button></div>
+</div></div>
+
+<div class="scrim" id="haSummaryModal"><div class="modal ha-summary-modal">
+  <div class="mh"><div class="eyebrow" data-i18n="hawalaAccounting"></div><h3 id="haSummaryTitle" data-i18n="pageTotal"></h3></div>
+  <div id="haSummaryModalBody"></div>
+  <div class="mf"><button class="btn btn-primary" data-close data-i18n="close"></button></div>
+</div></div>
+
+<div class="scrim" id="haPageImageModal"><div class="modal ha-image-preview-modal">
+  <div class="mh"><div class="eyebrow" data-i18n="hawalaAccounting"></div><h3 data-i18n="pageImageReady"></h3></div>
+  <div class="ha-image-preview-body">
+    <div class="ha-image-preview-frame"><img id="haPageImagePreview" alt="Hawala accounting page PNG preview"></div>
+    <div class="ha-image-preview-meta"><span id="haPageImageMeta"></span><b id="haPageImageSize"></b></div>
+    <div class="ha-image-preview-hint" data-i18n="pageImageDownloadHint"></div>
+  </div>
+  <div class="mf" style="justify-content:space-between;gap:8px">
+    <button class="btn btn-ghost" id="haOpenPageImage" type="button" data-i18n="openPageImage"></button>
+    <span style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="btn btn-ghost" data-close data-i18n="close"></button>
+      <a class="btn btn-primary ha-image-download" id="haPageImageDownload" href="#" download="hawala-accounting-page.png"><svg viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M5 19h14"/></svg><span data-i18n="downloadPng"></span></a>
+    </span>
+  </div>
+</div></div>
+
+<div class="scrim" id="hwEditModal"><div class="modal" style="max-width:620px">
+  <div class="mh"><div class="eyebrow mono" id="heId"></div><h3 data-i18n="editHawala"></h3></div>
+  <div class="ha-edit-image-wrap" id="heImageWrap"><img id="heImage" alt=""><div class="ha-edit-no-image" id="heNoImage" data-i18n="accountingNoImage"></div></div>
+  <div class="mb">
+    <div class="field"><label data-i18n="dateLbl"></label><input type="date" id="heDate"></div>
+    <div class="hawala-flow-note" data-i18n="hawalaFlowHint"></div>
+    <div class="hw-entry-grid">
+      <div class="field hw-customer-name"><label data-i18n="giverName"></label><input id="heSName" autocomplete="off"></div>
+      <div class="field hw-receiver-name"><label data-i18n="receiverName"></label><input id="heRName" autocomplete="off"></div>
+      <div class="field hw-aed-amount"><label data-i18n="givingAmount"></label><div class="money-input"><input id="heSNum" inputmode="decimal" autocomplete="off"><span class="money-code">AED</span></div></div>
+      <div class="field hw-payout-amount"><label data-i18n="receivingAmount"></label><div class="money-input"><input id="heRNum" inputmode="decimal" autocomplete="off"><span class="money-code" id="hePayoutCode">—</span></div></div>
+    </div>
+    <div class="field"><label class="hw-field-label"><span data-i18n="receiverCurrency"></span></label>
+      <div class="hw-currency" id="heRCurrency">
+        <button type="button" class="cur-btn" data-cur="PKR"><span data-i18n="currencyKaldari"></span><small>PKR</small></button>
+        <button type="button" class="cur-btn" data-cur="AFN"><span data-i18n="currencyAfghani"></span><small>AFN</small></button>
+      </div>
+      <small class="required-note" data-i18n="currencyRequiredHint"></small>
+    </div>
+    <div class="field"><label data-i18n="calculatedKaldari"></label><div class="money-input"><input id="heCalcKaldari" inputmode="decimal" autocomplete="off"><span class="money-code">PKR</span></div></div>
+    <div class="field"><label data-i18n="statusLbl"></label>
+      <div class="seg" id="heStatus"><button type="button" class="seg-b" data-st="unpaid" data-i18n="unpaid"></button><button type="button" class="seg-b" data-st="paid" data-i18n="paid"></button></div>
+    </div>
+  </div>
+  <div class="mf"><button class="btn btn-ghost" data-close data-i18n="cancel"></button><button class="btn btn-primary" id="heSave" data-i18n="noteEditSave"></button></div>
+</div></div>
+
+<div class="scrim" id="hwView"><div class="modal hawala-view-modal">
+  <div class="mh"><div class="eyebrow mono" id="hwvId"></div><h3 id="hwvTitle"></h3></div>
+  <div class="mb"><img id="hwvImg" class="hwp-img" alt=""><div class="ha-edit-no-image" id="hwvNoImage" data-i18n="accountingNoImage"></div><div class="hwv-meta" id="hwvMeta"></div></div>
+  <div class="mf hwv-actions">
+    <button class="btn btn-ghost" id="hwvClose" data-i18n="close"></button>
+    <button class="btn btn-ghost" id="hwvReplaceImg" data-i18n="replaceHawalaImage"></button>
+    <input type="file" id="hwvReplaceInput" accept="image/*" style="display:none">
+    <button class="btn btn-ghost" id="hwvEdit" data-i18n="editHawala"></button>
+    <button class="btn btn-ghost" id="hwvShare"><span data-i18n="shareWA"></span></button>
+    <button class="btn btn-primary" id="hwvToggle"></button>
+  </div>
+</div></div>
+
+<div class="scrim" id="bookModal"><div class="modal">
+  <div class="mh"><div class="eyebrow" id="bmEyebrow"></div><h3 id="bmTitle"></h3></div>
+  <div class="mb">
+    <div class="field"><label data-i18n="bookTitle"></label><input id="bmName"></div>
+    <div class="field"><label data-i18n="description"></label><textarea id="bmDesc" style="min-height:64px"></textarea></div>
+    <div class="field"><label data-i18n="dateLbl"></label><input type="date" id="bmDate"></div>
+    <div class="field"><label data-i18n="coverColor"></label><div class="chips" id="bmColors"></div></div>
+    <div class="field"><label data-i18n="coverPhoto"></label>
+      <div class="cover-pick"><div class="drop dropmini" id="coverDrop"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg><b data-i18n="uploadCover"></b><small data-i18n="coverHint"></small></div><div id="coverPrev"></div></div>
+    </div>
+  </div>
+  <div class="mf"><button class="btn btn-ghost" data-close data-i18n="cancel"></button><button class="btn btn-primary" id="bmSave" data-i18n="saveBook"></button></div>
+</div></div>
+
+<div class="scrim" id="uploadModal"><div class="modal">
+  <div class="mh"><div class="eyebrow" id="umEyebrow"></div><h3 id="umTitle"></h3></div>
+  <div class="mb">
+    <div class="field"><label><span data-i18n="pageTitleLabel"></span> <span style="font-weight:400;color:var(--faint)" data-i18n="firstRestAuto"></span></label><input id="umTitle2"></div>
+    <div class="drop" id="dropZone"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg><b data-i18n="takePhoto"></b><small data-i18n="formatsNote"></small></div>
+    <div class="thumbs" id="thumbs"></div>
+    <div class="proc" id="procBox">
+      <div class="prow"><span id="procLabel"></span><b id="procStat"></b></div>
+      <div class="bar"><i id="procBar"></i></div>
+      <div class="info"><b data-i18n="pipelineLbl"></b> <span data-i18n="pipeline"></span><span id="procSummary"></span></div>
+    </div>
+  </div>
+  <div class="mf"><button class="btn btn-ghost" data-close data-i18n="cancel"></button><button class="btn btn-primary" id="umDone" disabled data-i18n="addToBook"></button></div>
+</div></div>
+
+<div class="scrim" id="acctPageModal"><div class="modal">
+  <div class="mh"><div class="eyebrow" id="apEyebrow"></div><h3 id="apTitle"></h3></div>
+  <div class="mb">
+    <div class="field"><label data-i18n="personName"></label><input id="apName"></div>
+    <div class="field"><label data-i18n="dateLbl"></label><input type="date" id="apDate"></div>
+    <div class="hw-row2">
+      <div class="field"><label data-i18n="pageNumber"></label><input id="apNumber" inputmode="numeric"></div>
+      <div class="field"><label data-i18n="openingAmount"></label><input id="apOpening" inputmode="decimal" placeholder="0"></div>
+    </div>
+    <div id="apOpt">
+      <div class="field"><label data-i18n="noteOpt"></label><textarea id="apNote" style="min-height:54px"></textarea></div>
+      <div class="ap-uploads">
+        <button class="drop dropmini" id="apNotePhoto"><svg viewBox="0 0 24 24"><path d="M4 4h16v12l-4 4H4z"/><path d="M16 20v-4h4"/></svg><b data-i18n="addNotePhotoOpt"></b></button>
+        <button class="drop dropmini ref" id="apRefPhoto"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 15l5-4 4 3 4-4 5 4"/><circle cx="8.5" cy="8.5" r="1.5"/></svg><b data-i18n="addRefPhotoOpt"></b></button>
+      </div>
+      <div class="thumbs editthumbs" id="apThumbs"></div>
+    </div>
+  </div>
+  <div class="mf"><button class="btn btn-ghost" data-close data-i18n="cancel"></button><button class="btn btn-primary" id="apSave" data-i18n="noteEditSave"></button></div>
+</div></div>
+
+<div class="scrim" id="stackPageModal"><div class="modal">
+  <div class="mh"><div class="eyebrow" data-i18n="attachedPage"></div><h3 id="stModalTitle"></h3></div>
+  <div class="mb">
+    <div class="stack-modal-info">
+      <div class="stack-info-box"><span data-i18n="pageNumber"></span><b id="stNumber">—</b></div>
+      <div class="stack-info-box"><span id="stBalanceLabel" data-i18n="carriedBalance"></span><b id="stOpening">0</b></div>
+    </div>
+    <div class="field" id="stTypeField"><label data-i18n="attachedPageType"></label><div class="sheet-type-pick" id="stTypePick">
+      <button type="button" class="sheet-type-option" data-st-type="normal"><b data-i18n="normalPageType"></b><small data-i18n="normalPageShort"></small></button>
+      <button type="button" class="sheet-type-option" data-st-type="debt"><b data-i18n="debtPageType"></b><small data-i18n="debtPageShort"></small></button>
+    </div></div>
+    <div class="field"><label data-i18n="attachedPageName"></label><input id="stName"></div>
+    <div class="field"><label data-i18n="dateLbl"></label><input type="date" id="stDate"></div>
+    <div class="info" id="stHint"></div>
+  </div>
+  <div class="mf"><button class="btn btn-ghost" data-close data-i18n="cancel"></button><button class="btn btn-primary" id="stackPgSave" data-i18n="noteEditSave"></button></div>
+</div></div>
+
+<div class="scrim" id="refsModal"><div class="modal notes-modal ref-modal">
+  <div class="notes-head"><div class="notes-title"><span data-i18n="refTitle"></span> <span id="refsPos" class="mono"></span></div><button class="ic-x" id="refsClose" aria-label="close">×</button></div>
+  <div class="notes-stage" id="refsStage"></div>
+  <div class="notes-nav">
+    <button class="nav-btn" id="refsPrev"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="notes-tools"><button class="mini" id="refAdd" data-i18n="addRefImages"></button><button class="mini danger" id="refDel" data-i18n="delNote"></button></div>
+    <button class="nav-btn" id="refsNext"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+  </div>
+</div></div>
+
+<div class="scrim" id="txnModal"><div class="modal" id="txnModalBox">
+  <div class="mh"><div class="eyebrow" data-i18n="amanat"></div><h3 id="txnTitle"></h3></div>
+  <div class="mb">
+    <div class="hw-row2">
+      <div class="field"><label data-i18n="amount"></label><input id="txAmount" inputmode="decimal" placeholder="0"></div>
+      <div class="field"><label data-i18n="dateLbl"></label><input type="date" id="txDate"></div>
+    </div>
+    <div class="field"><label data-i18n="colReason"></label><input id="txReason"></div>
+  </div>
+  <div class="mf"><button class="btn btn-ghost" data-close data-i18n="cancel"></button><button class="btn btn-primary" id="txSave" data-i18n="noteEditSave"></button></div>
+</div></div>
+
+<div class="scrim" id="notesModal"><div class="modal notes-modal">
+  <div class="notes-head">
+    <div class="notes-title"><span data-i18n="notesTitle"></span> <span id="notesPos" class="mono"></span></div>
+    <button class="ic-x" id="notesClose" aria-label="close">×</button>
+  </div>
+  <div class="notes-stage" id="notesStage"></div>
+  <div class="notes-nav">
+    <button class="nav-btn" id="notesPrev"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <div class="notes-tools">
+      <button class="mini" id="noteAddText" data-i18n="addTextNote"></button>
+      <button class="mini" id="noteAddImg" data-i18n="addImgNote"></button>
+      <button class="mini" id="noteEdit" data-i18n="editNote"></button>
+      <button class="mini danger" id="noteDel" data-i18n="delNote"></button>
+    </div>
+    <button class="nav-btn" id="notesNext"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+  </div>
+</div></div>
+
+<div class="scrim" id="confirmModal"><div class="modal" style="max-width:400px">
+  <div class="mh"><div class="eyebrow" style="color:var(--accent)" data-i18n="confirm"></div><h3 id="cfTitle"></h3></div>
+  <div class="mb"><p id="cfBody" style="font-size:14px;color:var(--soft);line-height:1.55"></p></div>
+  <div class="mf"><button class="btn btn-ghost" data-close data-i18n="cancel"></button><button class="btn btn-primary" id="cfYes" style="background:var(--accent)" data-i18n="del"></button></div>
+</div></div>
+
+<div class="scrim" id="acctModal"><div class="modal">
+  <div class="mh"><div class="eyebrow" data-i18n="users"></div><h3 data-i18n="createAccount"></h3></div>
+  <div class="mb">
+    <div class="field"><label data-i18n="fullName"></label><input id="acName"></div>
+    <div class="field"><label data-i18n="username"></label><input id="acUser"></div>
+    <div class="field"><label data-i18n="password"></label><input id="acPass"></div>
+    <div class="field"><label data-i18n="roleLabel"></label><div class="select-wrap"><select id="acRole">
+      <option value="admin" data-i18n="role_admin"></option>
+      <option value="editor" data-i18n="role_editor"></option>
+      <option value="viewer" data-i18n="role_viewer"></option></select></div></div>
+  </div>
+  <div class="mf"><button class="btn btn-ghost" data-close data-i18n="cancel"></button><button class="btn btn-primary" id="acSave" data-i18n="createAccount"></button></div>
+</div></div>
+
+<div class="scrim" id="logDetailModal"><div class="modal log-detail-modal">
+  <div class="notes-head"><div class="notes-title" data-i18n="logDetails"></div><button class="ic-x" id="logDetailClose">×</button></div>
+  <div class="log-detail-body" id="logDetailBody"></div>
+</div></div>
+
+<div class="scrim lb" id="lightbox"><img id="lbImg" alt=""></div>
+
+<div class="toast" id="toast"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><span id="toastMsg"></span></div>
+
+<script src="./_r/a.js"></script>
+<script src="./_r/c.js"></script>
+<script src="./_r/s.js"></script>
+<script src="./_r/b.js"></script>
+</body>
+</html>
