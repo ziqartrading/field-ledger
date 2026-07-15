@@ -1,3 +1,3 @@
-# Static runtime
+# Static runtime assets
 
-Browser client deployment files. No business records or private backend source are stored here.
+Browser delivery files for an installable offline-capable client. No business records, passwords, backups, or Google backend source are stored in this repository.
