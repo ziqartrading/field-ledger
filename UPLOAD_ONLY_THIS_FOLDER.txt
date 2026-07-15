@@ -1,1 +1,0 @@
-Upload the CONTENTS of PUBLIC_REPOSITORY to GitHub. Do not upload any other folder from the master kit. In GitHub Pages choose main /docs.
