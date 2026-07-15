@@ -1,3 +1,5 @@
-# Static runtime assets
+# Static client runtime
 
-Browser delivery files for an installable offline-capable client. No business records, passwords, backups, or Google backend source are stored in this repository.
+Field Ledger v3.1.5 durable offline client. GitHub Pages publishes from `main /docs`.
+
+Business data, backups, passwords and Apps Script source must never be committed to this public repository.
