@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Field Ledger Cache Repair</title>
+<style>
+body{font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif;background:#f4f7fb;color:#172033;margin:0;padding:24px}
+main{max-width:720px;margin:40px auto;background:#fff;border:1px solid #dce4ef;border-radius:18px;padding:28px;box-shadow:0 14px 40px rgba(20,35,60,.08)}
+h1{margin-top:0;font-size:26px}.box{background:#eef5ff;border:1px solid #cfe0f7;border-radius:12px;padding:14px;margin:18px 0}.warn{background:#fff6e7;border-color:#efd19a}
+button{border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;background:#1f5fd1;color:#fff;font-size:15px}button:disabled{opacity:.55;cursor:wait}
+code{background:#eef2f7;border-radius:6px;padding:2px 6px}.status{white-space:pre-wrap;margin-top:16px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px}
+</style>
+</head>
+<body>
+<main>
+<h1>Field Ledger cache repair</h1>
+<p>This repairs only the website cache and service worker. It does <strong>not</strong> delete Field Ledger IndexedDB, local records, pending changes, login verifier, or downloaded backups.</p>
+<div class="box warn"><strong>Keep this tab online.</strong> After repair, Field Ledger will reopen using the newest GitHub Pages files.</div>
+<button id="repair">Repair cache and reopen Field Ledger</button>
+<div class="status" id="status">Ready.</div>
+</main>
+<script>
+const btn=document.getElementById('repair'),out=document.getElementById('status');
+function line(s){out.textContent += '\n'+s;}
+btn.onclick=async()=>{
+  btn.disabled=true;out.textContent='Starting repair…';
+  try{
+    if('serviceWorker' in navigator){
+      const regs=await navigator.serviceWorker.getRegistrations();
+      line('Service workers found: '+regs.length);
+      for(const r of regs){await r.unregister();line('Unregistered: '+r.scope);}
+    } else line('Service workers are not supported in this browser.');
+    if('caches' in window){
+      const names=await caches.keys();
+      const targets=names.filter(n=>n.startsWith('fl-r-'));
+      line('Field Ledger caches found: '+targets.length);
+      for(const n of targets){await caches.delete(n);line('Deleted cache: '+n);}
+    }
+    line('IndexedDB was not touched.');
+    line('Repair complete. Reopening…');
+    setTimeout(()=>location.replace('./?release=314&cache_repaired='+Date.now()),900);
+  }catch(e){
+    line('Repair failed: '+(e&&e.message?e.message:String(e)));
+    btn.disabled=false;
+  }
+};
+</script>
+</body>
+</html>
