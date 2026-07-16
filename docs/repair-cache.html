@@ -15,9 +15,9 @@ code{background:#eef2f7;border-radius:6px;padding:2px 6px}.status{white-space:pr
 </head>
 <body>
 <main>
-<h1>Field Ledger cache repair</h1>
+<h1>Field Ledger safe login/cache repair</h1>
 <p>This repairs only the website cache and service worker. It does <strong>not</strong> delete Field Ledger IndexedDB, local records, pending changes, login verifier, or downloaded backups.</p>
-<div class="box warn"><strong>Keep this tab online.</strong> After repair, Field Ledger will reopen using the newest GitHub Pages files.</div>
+<div class="box warn"><strong>Keep this tab online.</strong> After repair, Field Ledger will reopen using the verified v3.1.8 application files.</div>
 <button id="repair">Repair cache and reopen Field Ledger</button>
 <div class="status" id="status">Ready.</div>
 </main>
@@ -40,7 +40,7 @@ btn.onclick=async()=>{
     }
     line('IndexedDB was not touched.');
     line('Repair complete. Reopening…');
-    setTimeout(()=>location.replace('./?release=314&cache_repaired='+Date.now()),900);
+    setTimeout(()=>location.replace('./?release=3182&cache_repaired='+Date.now()),900);
   }catch(e){
     line('Repair failed: '+(e&&e.message?e.message:String(e)));
     btn.disabled=false;

@@ -1,8 +1,7 @@
-const C='fl-r-3.1.8';
-const S=['./','./index.html','./manifest.webmanifest','./icons/192.png','./icons/512.png'];
-self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(x=>x.addAll(S)).then(()=>self.skipWaiting())));
-self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
-self.addEventListener('fetch',e=>{const q=e.request;if(q.method!=='GET')return;const u=new URL(q.url);if(u.origin!==self.location.origin)return;if(q.mode==='navigate'){e.respondWith(fetch(q,{cache:'no-store'}).then(z=>{const y=z.clone();caches.open(C).then(c=>c.put('./index.html',y));return z}).catch(()=>caches.match('./index.html')));return}e.respondWith(caches.match(q).then(z=>z||fetch(q).then(v=>{const y=v.clone();caches.open(C).then(c=>c.put(q,y));return v}))) });
-self.addEventListener('message',e=>{if(e.data&&e.data.type==='SKIP_WAITING')self.skipWaiting()});
-
+const C='fl-r-3.1.8-r2';
+const S=['./','./index.html','./manifest.webmanifest','./icons/192.png','./icons/512.png','./repair-cache.html'];
+self.addEventListener('install',e=>e.waitUntil((async()=>{const c=await caches.open(C);for(const url of S){const response=await fetch(url,{cache:'reload'});if(!response.ok)throw new Error('Precache failed: '+url);await c.put(url,response);}await self.skipWaiting();})()));
+self.addEventListener('activate',e=>e.waitUntil((async()=>{const names=await caches.keys();await Promise.all(names.filter(name=>name.startsWith('fl-r-')&&name!==C).map(name=>caches.delete(name)));await self.clients.claim();})()));
+self.addEventListener('fetch',e=>{const q=e.request;if(q.method!=='GET')return;const u=new URL(q.url);if(u.origin!==self.location.origin)return;if(q.mode==='navigate'){e.respondWith(fetch(q,{cache:'no-store'}).then(async response=>{if(response.ok){const c=await caches.open(C);await c.put('./index.html',response.clone());}return response;}).catch(()=>caches.match('./index.html')));return;}e.respondWith(caches.match(q).then(cached=>cached||fetch(q,{cache:'no-store'}).then(async response=>{if(response.ok){const c=await caches.open(C);await c.put(q,response.clone());}return response;})));});
+self.addEventListener('message',e=>{if(!e.data)return;if(e.data.type==='SKIP_WAITING')self.skipWaiting();if(e.data.type==='PURGE_FIELD_LEDGER_CACHES')e.waitUntil(caches.keys().then(names=>Promise.all(names.filter(name=>name.startsWith('fl-r-')&&name!==C).map(name=>caches.delete(name)))));});
 self.addEventListener('sync',e=>{if(e.tag!=='field-ledger-resume-sync')return;e.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>Promise.all(list.map(c=>c.postMessage({type:'FIELD_LEDGER_SYNC_REQUESTED',at:Date.now()})))));});
