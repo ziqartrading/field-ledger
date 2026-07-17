@@ -1,4 +1,4 @@
-const C='fl-r-3.3.2';
+const C='fl-r-3.3.3';
 const S=['./','./index.html','./manifest.webmanifest','./icons/192.png','./icons/512.png'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(x=>x.addAll(S)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));
