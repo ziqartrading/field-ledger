@@ -6,8 +6,10 @@
     return !!(view&&view.classList.contains('active'));
   }
   function loadCode(force){
-    if(!usersOpen()||typeof flRenderActivationAdmin!=='function')return;
-    Promise.resolve(flRenderActivationAdmin(!!force)).catch(function(error){
+    if(!usersOpen())return;
+    const loader=typeof flRefreshUsersAndCode==='function'?flRefreshUsersAndCode:(typeof flRenderActivationAdmin==='function'?flRenderActivationAdmin:null);
+    if(!loader)return;
+    Promise.resolve(loader(!!force)).catch(function(error){
       const status=document.getElementById('flAdminActivationCount');
       if(status)status.textContent=error&&error.message||'Code could not load. Tap Load / refresh code.';
     });
