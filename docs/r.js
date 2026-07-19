@@ -1,9 +1,9 @@
-const CACHE='fl-r-3.5.4';
+const CACHE='fl-r-3.5.5';
 const STATIC_FILES=['./','./index.html','./manifest.webmanifest','./icons/192.png','./icons/512.png','./icons/ziqar-logo.svg'];
 const DB_NAME='FieldLedgerPWA',DB_VERSION=2,KV='kv',OPS='ops';
 const KEY={STATE:'state',META:'meta',TOKEN:'token',TASK:'upload-task-v2',LEASE:'sync-lease-v1'};
 const BACKEND_URL='https://script.google.com/macros/s/AKfycbyxPj3mf8rBawz4FuiBZI20Th60MgpkEKcfdeihcmfpwR6xfSgpFnyAAfY7ndUwWEpc/exec';
-const APP_VERSION='3.5.4',SCHEMA=10,CHUNK_SIZE=1500000;
+const APP_VERSION='3.5.5',SCHEMA=10,CHUNK_SIZE=1500000;
 
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(STATIC_FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
