@@ -1,14 +1,14 @@
-const CACHE='fl-r-3.5.2';
+const CACHE='fl-r-3.5.3';
 const STATIC_FILES=['./','./index.html','./manifest.webmanifest','./icons/192.png','./icons/512.png','./icons/ziqar-logo.svg'];
 const DB_NAME='FieldLedgerPWA',DB_VERSION=2,KV='kv',OPS='ops';
 const KEY={STATE:'state',META:'meta',TOKEN:'token',TASK:'upload-task-v2',LEASE:'sync-lease-v1'};
 const BACKEND_URL='https://script.google.com/macros/s/AKfycbyxPj3mf8rBawz4FuiBZI20Th60MgpkEKcfdeihcmfpwR6xfSgpFnyAAfY7ndUwWEpc/exec';
-const APP_VERSION='3.5.2',SCHEMA=10,CHUNK_SIZE=1500000;
+const APP_VERSION='3.5.3',SCHEMA=10,CHUNK_SIZE=1500000;
 
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(STATIC_FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',event=>{const request=event.request;if(request.method!=='GET')return;const url=new URL(request.url);if(url.origin!==self.location.origin)return;if(request.mode==='navigate'){event.respondWith(fetch(request,{cache:'no-store'}).then(response=>{const copy=response.clone();caches.open(CACHE).then(cache=>cache.put('./index.html',copy));return response;}).catch(()=>caches.match('./index.html')));return;}event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{const copy=response.clone();caches.open(CACHE).then(cache=>cache.put(request,copy));return response;})));});
-self.addEventListener('message',event=>{if(event.data&&event.data.type==='SKIP_WAITING')self.skipWaiting();});
+self.addEventListener('message',event=>{if(!event.data)return;if(event.data.type==='SKIP_WAITING'){self.skipWaiting();return;}if(event.data.type==='FIELD_LEDGER_RUN_BACKGROUND_SYNC')event.waitUntil(runBackgroundSync().catch(error=>notify('FIELD_LEDGER_BACKGROUND_SYNC_FAILED',{message:error.message||String(error)})));});
 
 function openDb(){return new Promise((resolve,reject)=>{const request=indexedDB.open(DB_NAME,DB_VERSION);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error||new Error('IndexedDB unavailable'));request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains(KV))db.createObjectStore(KV,{keyPath:'key'});if(!db.objectStoreNames.contains(OPS))db.createObjectStore(OPS,{keyPath:'id'});};});}
 function requestResult(request){return new Promise((resolve,reject)=>{request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});}
