@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const root = process.cwd();
 const docs = path.join(root, 'docs');
-const expectedVersion = '3.7.0';
+const expectedVersion = '3.8.0';
 const required = [
   'docs/index.html',
   'docs/r.js',
@@ -21,14 +21,16 @@ for (const file of required) check(fs.existsSync(path.join(root, file)), `Missin
 const index = fs.readFileSync(path.join(docs, 'index.html'), 'utf8');
 const worker = fs.readFileSync(path.join(docs, 'r.js'), 'utf8');
 const activation = fs.readFileSync(path.join(docs, 'activation-panel.js'), 'utf8');
+const backendPath = path.join(root, '..', 'PRIVATE_GOOGLE_BACKEND', 'Code.gs');
+const backend = fs.readFileSync(backendPath, 'utf8');
 const manifest = JSON.parse(fs.readFileSync(path.join(docs, 'manifest.webmanifest'), 'utf8'));
 
 check(index.includes(`const FIELD_LEDGER_VERSION='${expectedVersion}'`), 'HTML app version is not aligned');
 check(index.includes(`APP_VERSION:'${expectedVersion}'`), 'Runtime app version is not aligned');
-check(index.includes("versionAtLeast(r.backendVersion,'3.7.0')"), 'Required backend version is not aligned');
+check(index.includes("versionAtLeast(r.backendVersion,'3.8.0')"), 'Required backend version is not aligned');
 check(worker.includes(`const APP_VERSION='${expectedVersion}'`), 'Service-worker version is not aligned');
 check(worker.includes(`const CACHE='fl-r-${expectedVersion}'`), 'Service-worker cache name is stale');
-check(index.includes('activation-panel.js?v=370'), 'Activation panel cache-buster is stale');
+check(index.includes('activation-panel.js?v=380'), 'Activation panel cache-buster is stale');
 check(manifest.name === 'Ziqar Trading' && manifest.display === 'standalone', 'PWA manifest is invalid');
 check(worker.includes("cached=await cache.match('./index.html')") && worker.includes('return cached;'), 'Offline navigation is not cache-first');
 check(worker.includes('FIELD_LEDGER_CAPABILITIES_RESPONSE') && worker.includes('foregroundUpload:true'), 'Worker upload handoff is missing');
@@ -37,7 +39,7 @@ check(index.includes('targetBytes=1200*1024') && index.includes('if(best)return{
 check(index.includes('compressed:false,fallback:true'), 'Lossless emergency image fallback is missing');
 check(index.includes('scheduleLocalBackup=function(){return null;}'), 'Legacy automatic full-copy backup is still enabled');
 check(!index.includes("if(BACKUP_SETTINGS.localEveryChange)await performBackup('local',{silent:true});"), 'Boot still duplicates the full local database');
-check(index.includes("DB_NAME='FieldLedgerPWA',DB_VERSION=2") && index.includes('DATA_SCHEMA:11'), 'Existing IndexedDB identity or v3.7 schema is incorrect');
+check(index.includes("DB_NAME='FieldLedgerPWA',DB_VERSION=2") && index.includes('DATA_SCHEMA:12'), 'Existing IndexedDB identity or v3.8 schema is incorrect');
 check(index.includes("accountId=uid('AC')") && index.includes('entityKey:accountId'), 'Collision-safe account identity is missing');
 check(index.includes('flRemoteSafetyV370') && index.includes('REMOTE_DATA_SAFETY_BLOCK'), 'Destructive remote-pull guard is missing');
 check(index.includes('flDuplicateEntityIdsV370') && index.includes('DUPLICATE_ENTITY_IDS'), 'Client duplicate-identity guard is missing');
@@ -52,6 +54,24 @@ check(index.includes('id="umOfflineData"') && index.includes("FL_GOOGLE_SYNC_PRE
 check(index.includes('FL_GOOGLE_DATA_ACTIONS_V365') && index.includes('GOOGLE_DATA_SYNC_DISABLED') && index.includes('flGoogleDataSyncEnabledV365=false'), 'Google business-data transfer is not safely disabled by default');
 check(index.includes('ziqar-offline-transfer-v1') && index.includes('flDownloadOfflineTransferV365') && index.includes('flImportOfflineFileV365') && index.includes('flShareOfflineTransferV365'), 'Offline download, import or device sharing is missing');
 check(worker.includes("GOOGLE_DATA_SYNC:'google-data-sync-enabled-v1'") && worker.includes('if(!await googleDataSyncEnabled())return false'), 'Service worker can upload while Google sync is off');
+check(index.includes('flEnsureDatasetReadyV381') && index.includes('DATASET_ADOPTION_REQUIRED'), 'Protected device-dataset migration guard is missing');
+check(index.includes('Adopt Google master safely') && index.includes('flAdoptGoogleMasterV381'), 'Explicit protected master adoption control is missing');
+check(index.includes("action==='pushStart'") && index.includes("datasetId:String(meta.datasetId||'')"), 'Foreground upload is not bound to the protected dataset');
+check(index.includes('task.version=6') && index.includes("task.datasetId=String(meta.datasetId||'')"), 'Foreground resumable task is not dataset-bound');
+check(index.includes('data-user-sync-policy') && index.includes("api('setUserSyncPolicy'") && index.includes('Google sync: ON'), 'Admin per-user Google-sync controls are missing');
+check(index.includes("api('syncQueueJoin'") && index.includes("api('syncQueueRelease'") && index.includes('Protected one-device sync queue'), 'Foreground FIFO sync-turn enforcement or UI is missing');
+check(worker.includes('async function ensureDataset(tokenRow)') && worker.includes("code:'DATASET_RESET_REQUIRED'"), 'Background worker can cross a protected dataset reset');
+check(worker.includes('version:6') && worker.includes('datasetId:task.datasetId'), 'Background resumable task is not dataset-bound');
+check(worker.includes("api('syncQueueJoin'") && worker.includes("api('syncQueueRelease'") && worker.includes('FIELD_LEDGER_SYNC_QUEUED'), 'Background worker does not obey the FIFO sync queue');
+check(backend.includes("const FL_BACKEND_VERSION = '3.8.0'") && backend.includes('const FL_SCHEMA_VERSION = 12'), 'Private backend version or schema is not aligned');
+check(backend.includes("DATASET_ID: 'FL_DATASET_ID_V380'") && backend.includes('function upgradeFieldLedgerV380()'), 'Backend dataset migration entry point is missing');
+check(backend.includes('flRequireDatasetV380_(payload)') && backend.includes("flError_('DATASET_RESET_REQUIRED'"), 'Backend stale-device write fence is missing');
+check(backend.includes("Users: ['UserId','Name','Username','Role','Salt','PasswordHash','Active','CreatedAt','UpdatedAt','LastLoginAt','GoogleSyncAllowed']"), 'Users sheet does not persist admin sync policy');
+check(backend.includes("if(action==='setUserSyncPolicy')") && backend.includes("flError_('SYNC_DISABLED_BY_ADMIN'"), 'Server-enforced per-user sync policy is missing');
+check(backend.includes("SyncQueue: ['RequestId','UserId','Username','DeviceId'") && backend.includes('function flGrantNextSyncTurn_()'), 'Backend FIFO sync queue storage or grant logic is missing');
+check(backend.includes("if(action==='syncQueueJoin')") && backend.includes('flRequireSyncTurn_(auth,payload)'), 'Backend does not require a granted sync turn for transfers');
+check(backend.includes("sh.getRange(Number(cached._rowNumber),11).setValue(status)") && backend.includes("sh.getRange(idx+2,11).setValue(status)"), 'Upload completion is not written to the Status column');
+check(!backend.includes('getRange(Number(cached._rowNumber),12).setValue(status)') && !backend.includes('getRange(idx+2,12).setValue(status)'), 'Legacy upload-status column bug is present');
 check(!index.includes('CHANGE_THIS_TO_A_STRONG_PASSWORD'), 'Private backend setup secret leaked into the public client');
 check(!activation.includes('CHANGE_THIS_TO_A_STRONG_PASSWORD'), 'Private backend setup secret leaked into activation code');
 

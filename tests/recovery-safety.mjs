@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import path from 'node:path';
+import crypto from 'node:crypto';
 
 const backendPath = path.resolve('../PRIVATE_GOOGLE_BACKEND/Code.gs');
 const source = fs.readFileSync(backendPath, 'utf8');
@@ -10,8 +11,9 @@ const context = vm.createContext({
   Utilities: {
     getUuid: () => `00000000-0000-4000-8000-${String(++uuidCounter).padStart(12, '0')}`,
     formatDate: date => new Date(date).toISOString(),
-    computeDigest: () => [],
+    computeDigest: (_algorithm, value) => [...crypto.createHash('sha256').update(String(value)).digest()].map(byte => byte > 127 ? byte - 256 : byte),
     DigestAlgorithm: { SHA_256: 'SHA_256' },
+    Charset: { UTF_8: 'UTF_8' },
   },
   Session: { getScriptTimeZone: () => 'Etc/UTC' },
   MimeType: { PLAIN_TEXT: 'text/plain' },
