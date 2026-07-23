@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const root = process.cwd();
 const docs = path.join(root, 'docs');
-const expectedVersion = '3.8.1';
+const expectedVersion = '3.8.2';
 const required = [
   'docs/index.html',
   'docs/r.js',
@@ -27,10 +27,10 @@ const manifest = JSON.parse(fs.readFileSync(path.join(docs, 'manifest.webmanifes
 
 check(index.includes(`const FIELD_LEDGER_VERSION='${expectedVersion}'`), 'HTML app version is not aligned');
 check(index.includes(`APP_VERSION:'${expectedVersion}'`), 'Runtime app version is not aligned');
-check(index.includes("versionAtLeast(r.backendVersion,'3.8.1')"), 'Required backend version is not aligned');
+check(index.includes("versionAtLeast(r.backendVersion,'3.8.2')"), 'Required backend version is not aligned');
 check(worker.includes(`const APP_VERSION='${expectedVersion}'`), 'Service-worker version is not aligned');
 check(worker.includes(`const CACHE='fl-r-${expectedVersion}'`), 'Service-worker cache name is stale');
-check(index.includes('activation-panel.js?v=381'), 'Activation panel cache-buster is stale');
+check(index.includes('activation-panel.js?v=382'), 'Activation panel cache-buster is stale');
 check(manifest.name === 'Ziqar Trading' && manifest.display === 'standalone', 'PWA manifest is invalid');
 check(worker.includes("cached=await cache.match('./index.html')") && worker.includes('return cached;'), 'Offline navigation is not cache-first');
 check(worker.includes('FIELD_LEDGER_CAPABILITIES_RESPONSE') && worker.includes('foregroundUpload:true'), 'Worker upload handoff is missing');
@@ -63,7 +63,7 @@ check(index.includes("api('syncQueueJoin'") && index.includes("api('syncQueueRel
 check(worker.includes('async function ensureDataset(tokenRow)') && worker.includes("code:'DATASET_RESET_REQUIRED'"), 'Background worker can cross a protected dataset reset');
 check(worker.includes('version:6') && worker.includes('datasetId:task.datasetId'), 'Background resumable task is not dataset-bound');
 check(worker.includes("api('syncQueueJoin'") && worker.includes("api('syncQueueRelease'") && worker.includes('FIELD_LEDGER_SYNC_QUEUED'), 'Background worker does not obey the FIFO sync queue');
-check(backend.includes("const FL_BACKEND_VERSION = '3.8.1'") && backend.includes('const FL_SCHEMA_VERSION = 12'), 'Private backend version or schema is not aligned');
+check(backend.includes("const FL_BACKEND_VERSION = '3.8.2'") && backend.includes('const FL_SCHEMA_VERSION = 12'), 'Private backend version or schema is not aligned');
 check(backend.includes("DATASET_ID: 'FL_DATASET_ID_V380'") && backend.includes('function upgradeFieldLedgerV380()'), 'Backend dataset migration entry point is missing');
 check(backend.includes('flRequireDatasetV380_(payload)') && backend.includes("flError_('DATASET_RESET_REQUIRED'"), 'Backend stale-device write fence is missing');
 check(backend.includes("Users: ['UserId','Name','Username','Role','Salt','PasswordHash','Active','CreatedAt','UpdatedAt','LastLoginAt','GoogleSyncAllowed']"), 'Users sheet does not persist admin sync policy');
