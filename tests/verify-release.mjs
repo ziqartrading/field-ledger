@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const root = process.cwd();
 const docs = path.join(root, 'docs');
-const expectedVersion = '3.8.2';
+const expectedVersion = '3.8.3';
 const required = [
   'docs/index.html',
   'docs/r.js',
@@ -30,7 +30,7 @@ check(index.includes(`APP_VERSION:'${expectedVersion}'`), 'Runtime app version i
 check(index.includes("versionAtLeast(r.backendVersion,'3.8.2')"), 'Required backend version is not aligned');
 check(worker.includes(`const APP_VERSION='${expectedVersion}'`), 'Service-worker version is not aligned');
 check(worker.includes(`const CACHE='fl-r-${expectedVersion}'`), 'Service-worker cache name is stale');
-check(index.includes('activation-panel.js?v=382'), 'Activation panel cache-buster is stale');
+check(index.includes(`activation-panel.js?v=${expectedVersion.replaceAll('.', '')}`), 'Activation panel cache-buster is stale');
 check(manifest.name === 'Ziqar Trading' && manifest.display === 'standalone', 'PWA manifest is invalid');
 check(worker.includes("cached=await cache.match('./index.html')") && worker.includes('return cached;'), 'Offline navigation is not cache-first');
 check(worker.includes('FIELD_LEDGER_CAPABILITIES_RESPONSE') && worker.includes('foregroundUpload:true'), 'Worker upload handoff is missing');

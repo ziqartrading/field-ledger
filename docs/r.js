@@ -1,9 +1,9 @@
-const CACHE='fl-r-3.8.2';
+const CACHE='fl-r-3.8.3';
 const STATIC_FILES=['./','./index.html','./activation-panel.js','./manifest.webmanifest','./icons/192.png','./icons/512.png','./icons/ziqar-logo.svg'];
 const DB_NAME='FieldLedgerPWA',DB_VERSION=2,KV='kv',OPS='ops';
 const KEY={STATE:'state',META:'meta',TOKEN:'token',TASK:'upload-task-v2',LEASE:'sync-lease-v1',LAST_SYNCED:'last-synced-state-v2',IMAGE_INDEX:'synced-image-index-v1',GOOGLE_DATA_SYNC:'google-data-sync-enabled-v1'};
 const BACKEND_URL='https://script.google.com/macros/s/AKfycbxoPLCDiuS5I2LLHiCU5iyKMFl1nPFDcllMihuMg5y6U3g7IJSGH1G_YbK6d7t-Sxo/exec';
-const APP_VERSION='3.8.2',SCHEMA=12,CHUNK_SIZE=1500000;
+const APP_VERSION='3.8.3',SCHEMA=12,CHUNK_SIZE=1500000;
 
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(STATIC_FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));

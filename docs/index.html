@@ -8,7 +8,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' data: blob:; frame-src https://script.google.com https://script.googleusercontent.com https://*.googleusercontent.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://*.googleusercontent.com; worker-src 'self' blob:; manifest-src 'self'; form-action 'self'; upgrade-insecure-requests">
 
 <meta name="field-ledger-app" content="Field Ledger">
-<meta name="field-ledger-version" content="3.8.2">
+<meta name="field-ledger-version" content="3.8.3">
 <meta name="field-ledger-schema" content="10">
 <meta name="field-ledger-build" content="2026-07-22-offline-tablet-resilience">
 <title>Ziqar Trading</title>
@@ -888,7 +888,7 @@ function renderPermissionMatrix(){const host=$('#permissionMatrix');if(!host)ret
 const canWrite=()=>currentUser&&currentUser.role!=='viewer';const initials=n=>n.split(/\s+/).map(w=>w[0]||'').join('').slice(0,2).toUpperCase();const roleLabel=r=>t('role_'+r);function logComparable(v){if(v instanceof Date)return v.toISOString();if(v===undefined)return null;if(v&&typeof v==='object')return JSON.stringify(v);return v;}
 function logMeta(target,recordId,before,after,labels){const changes=[];before=before||{};after=after||{};const keys=[...new Set([...Object.keys(before),...Object.keys(after)])];keys.forEach(k=>{const a=logComparable(before[k]),b=logComparable(after[k]);if(String(a??'')!==String(b??''))changes.push({field:k,label:(labels&&labels[k])||k,before:a,after:b});});return{target:target||'',recordId:recordId||'',changes};}
 function logEvent(action,detail,meta){if(!currentUser)return;const cleanMeta=meta&&typeof meta==='object'?{target:meta.target||'',recordId:meta.recordId||'',changes:Array.isArray(meta.changes)?meta.changes.map(c=>({field:c.field||'',label:c.label||c.field||'',before:logComparable(c.before),after:logComparable(c.after)})):[]}:null;const eventId='LOG-'+(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2));LOGS.push({id:eventId,entityKey:eventId,time:new Date(),user:currentUser.name,role:currentUser.role,action,detail:detail||'',meta:cleanMeta});DATA_REVISION++;if(BACKUP_SETTINGS.localEveryChange)scheduleLocalBackup();if($('#activityView')&&$('#activityView').classList.contains('active'))renderActivity();if($('#adminView')&&$('#adminView').classList.contains('active')){renderBackupCenter();if(typeof renderUpdateCenter==='function')renderUpdateCenter();}}
-const FIELD_LEDGER_VERSION='3.8.2',FIELD_LEDGER_SCHEMA=12,FIELD_LEDGER_BUILD='2026-07-23-protected-dataset-migration';const BACKUP_DB_NAME='FieldLedgerDemoBackupDB',BACKUP_STORE='backups',BACKUP_SETTINGS_KEY='field-ledger-backup-settings-v1',BACKUP_FALLBACK_PREFIX='field-ledger-backup-record-v1-';let DATA_REVISION=1,backupDbPromise=null,backupLocalTimer=null,backupRenderToken=0;let BACKUP_SETTINGS={driveDaily:false,localEveryChange:true};function loadBackupSettings(){try{const x=JSON.parse(localStorage.getItem(BACKUP_SETTINGS_KEY)||'null');if(x&&typeof x==='object')BACKUP_SETTINGS={driveDaily:!!x.driveDaily,localEveryChange:x.localEveryChange!==false};}catch(_){}}
+const FIELD_LEDGER_VERSION='3.8.3',FIELD_LEDGER_SCHEMA=12,FIELD_LEDGER_BUILD='2026-07-23-unified-storage-sync';const BACKUP_DB_NAME='FieldLedgerDemoBackupDB',BACKUP_STORE='backups',BACKUP_SETTINGS_KEY='field-ledger-backup-settings-v1',BACKUP_FALLBACK_PREFIX='field-ledger-backup-record-v1-';let DATA_REVISION=1,backupDbPromise=null,backupLocalTimer=null,backupRenderToken=0;let BACKUP_SETTINGS={driveDaily:false,localEveryChange:true};function loadBackupSettings(){try{const x=JSON.parse(localStorage.getItem(BACKUP_SETTINGS_KEY)||'null');if(x&&typeof x==='object')BACKUP_SETTINGS={driveDaily:!!x.driveDaily,localEveryChange:x.localEveryChange!==false};}catch(_){}}
 function saveBackupSettings(){try{localStorage.setItem(BACKUP_SETTINGS_KEY,JSON.stringify(BACKUP_SETTINGS));}catch(_){}}
 loadBackupSettings();function backupDb(){if(backupDbPromise)return backupDbPromise;backupDbPromise=new Promise((resolve,reject)=>{if(!('indexedDB'in window)){reject(new Error('indexedDB unavailable'));return;}const req=indexedDB.open(BACKUP_DB_NAME,1);req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(BACKUP_STORE))db.createObjectStore(BACKUP_STORE,{keyPath:'kind'});};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('database'));});return backupDbPromise;}
 function fallbackBackupGet(kind){try{const raw=localStorage.getItem(BACKUP_FALLBACK_PREFIX+kind);return raw?reviveBackupJson(raw):null;}catch(_){return null;}}
@@ -1305,7 +1305,7 @@ ${t('statusLbl')}: ${rec.paid?t('paid'):t('unpaid')}`;try{if(rec.image&&typeof f
 if(navigator.share){await navigator.share({text:cap});return;}}catch(e){if(e&&e.name==='AbortError')return;}
 window.open('https://wa.me/?text='+encodeURIComponent(cap),'_blank');}
 ;
-window.FIELD_LEDGER_CONFIG=Object.freeze({APP_VERSION:'3.8.2',DATA_SCHEMA:12,BACKEND_URL:'https://script.google.com/macros/s/AKfycbxoPLCDiuS5I2LLHiCU5iyKMFl1nPFDcllMihuMg5y6U3g7IJSGH1G_YbK6d7t-Sxo/exec',FIRST_RUN_MODE:'blank',SYNC_INTERVAL_MS:30000,CHUNK_SIZE:1500000,BRIDGE_TIMEOUT_MS:6500,API_TIMEOUT_MS:15000,KEEP_LOCAL_EXPORTS:10,ENABLE_MONTHLY_PROJECTIONS:true});
+window.FIELD_LEDGER_CONFIG=Object.freeze({APP_VERSION:'3.8.3',DATA_SCHEMA:12,BACKEND_URL:'https://script.google.com/macros/s/AKfycbxoPLCDiuS5I2LLHiCU5iyKMFl1nPFDcllMihuMg5y6U3g7IJSGH1G_YbK6d7t-Sxo/exec',FIRST_RUN_MODE:'blank',SYNC_INTERVAL_MS:30000,CHUNK_SIZE:1500000,BRIDGE_TIMEOUT_MS:6500,API_TIMEOUT_MS:15000,KEEP_LOCAL_EXPORTS:10,ENABLE_MONTHLY_PROJECTIONS:true});
 
 ;
 (function(){
@@ -2375,6 +2375,126 @@ renderSyncCenter=async function(...args){const result=await flRenderSyncTransfer
 const flTransferUiStyleV382=document.createElement('style');flTransferUiStyleV382.textContent=`.fl-transfer-policy-help{grid-column:1/-1;display:grid;gap:5px;padding:14px;border:1px solid var(--border);border-radius:13px;background:var(--accent-soft);color:var(--text)}.fl-transfer-policy-help span{font-size:var(--fl-fs-12,12px);line-height:1.5;color:var(--soft)}.fl-user-sync-policy{min-height:38px;white-space:normal}`;document.head.appendChild(flTransferUiStyleV382);
 flRefreshGoogleSyncUiV365();
 
+/* ===== v3.8.3: one role-aware Storage & Sync center ===== */
+const flUnifiedStorageStyleV383=document.createElement('style');
+flUnifiedStorageStyleV383.id='flUnifiedStorageStyleV383';
+flUnifiedStorageStyleV383.textContent=`
+#umOfflineData,#backupSection,#flSyncSection,#flTabletSection{display:none!important}
+.fl-storage-center{display:none!important}
+.fl-offline-data-dialog{width:min(960px,100%)!important}
+.fl-unified-section{margin-top:16px;padding:16px;border:1px solid var(--border);border-radius:16px;background:var(--surface)}
+.fl-unified-section h3{font-size:var(--fl-fs-16,16px);margin:0 0 5px}
+.fl-unified-section>p{color:var(--soft);font-size:var(--fl-fs-12_5,12.5px);line-height:1.5;margin:0 0 13px}
+.fl-unified-status{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.fl-unified-status>div{display:grid;gap:4px;min-width:0;padding:11px 12px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2)}
+.fl-unified-status span{font-size:var(--fl-fs-11,11px);color:var(--soft)}
+.fl-unified-status b{font-size:var(--fl-fs-13,13px);overflow-wrap:anywhere}
+.fl-unified-status .good{color:#237a4a}.fl-unified-status .warn{color:#9a6914}.fl-unified-status .bad{color:#b74236}
+.fl-unified-actions{display:flex;flex-wrap:wrap;gap:9px}
+.fl-unified-actions .btn{flex:1 1 190px;justify-content:center;white-space:normal;text-align:center}
+.fl-unified-role{margin-top:13px;padding:9px 11px;border-radius:10px;background:var(--accent-soft);color:var(--soft);font-size:var(--fl-fs-12,12px);line-height:1.45}
+.fl-unified-role b{color:var(--text)}
+.fl-unified-toggle{display:flex;align-items:flex-start;gap:10px;margin-top:12px;padding:11px 12px;border:1px solid var(--border);border-radius:12px}
+.fl-unified-toggle input{margin-top:3px;flex:0 0 auto}
+.fl-unified-toggle span{font-size:var(--fl-fs-12,12px);line-height:1.45;color:var(--soft)}
+.fl-unified-toggle b{color:var(--text)}
+@media(max-width:520px){.fl-unified-status{grid-template-columns:1fr}.fl-unified-section{padding:12px}.fl-unified-actions .btn{flex-basis:100%}}
+`;
+document.head.appendChild(flUnifiedStorageStyleV383);
+
+const flRenderStorageLegacyV383=flRenderOfflineDataV365;
+function flUnifiedRoleV383(){return flNormalizeRoleValue(currentUser&&currentUser.role);}
+function flUnifiedTransferAllowedV383(){
+  const user=backendUser||currentUser||{};
+  return user.googleSyncAllowed===true;
+}
+function flUnifiedCloseMenusV383(){
+  if(typeof flCloseUserMenuV381==='function')flCloseUserMenuV381();
+  const menu=$('#userMenu');if(menu)menu.classList.remove('open');
+}
+function flUnifiedLabelV383(){
+  const button=$('#umStorageSync');if(!button)return;
+  button.removeAttribute('data-i18n');
+  button.textContent=LANG==='ps'?'ذخیره او د معلوماتو لېږد':'Storage & Sync';
+  button.title=LANG==='ps'?'محلي ذخیره، بیک اپ او د معلوماتو لېږد':'Local storage, backups and business-data transfer';
+}
+async function flRenderUnifiedStorageV383(){
+  await flRenderStorageLegacyV383();
+  const modal=flOfflineDataModalV365,body=modal&&modal.querySelector('[data-fl-offline-body]');
+  if(!modal||!body||!currentUser)return;
+  const en=LANG!=='ps',role=flUnifiedRoleV383(),admin=role==='admin',editor=role==='editor';
+  if(!admin&&!editor){modal.classList.remove('show');return;}
+  const title=modal.querySelector('[data-fl-offline-title]');if(title)title.textContent=en?'Storage & Sync':'ذخیره او د معلوماتو لېږد';
+  const [info,folder,prefs]=await Promise.all([flStorageInfo(),folderStatus({measure:true}),flGetSyncPrefs()]);
+  const permission=flUnifiedTransferAllowedV383(),connected=!!backendToken&&navigator.onLine;
+  const folderState=folder.ready?(en?'Connected · verified':'وصل او تایید شوی'):folder.registered?(en?'Reconnect required':'بیا نښلول اړین دي'):(en?'Not configured':'نه دی ټاکل شوی');
+  const localState=info.lastLocalSaveAt?(en?'Active · saved':'فعال · خوندي دی'):(en?'Waiting for first save':'د لومړي خوندي کولو انتظار');
+  const section=document.createElement('section');
+  section.className='fl-unified-section';
+  section.dataset.flUnifiedDevice='1';
+  section.innerHTML=`<h3>${en?'Device storage and transfer':'د وسیلې ذخیره او لېږد'}</h3>
+  <p>${en?'Local saving and account access stay active. The two transfer controls below affect only business-data upload and download.':'محلي خوندي کول او حساب ته لاسرسی تل فعال دي. لاندې دوه کنټرولونه یوازې د سوداګریزو معلوماتو اپلوډ او ډاونلوډ اداره کوي.'}</p>
+  <div class="fl-unified-status">
+    <div><span>${en?'Backend account access':'د backend حسابي اړیکه'}</span><b class="${connected?'good':'warn'}">${connected?(en?'Connected · login and codes active':'وصل دی · ننوتل او کوډونه فعال دي'):(en?'Offline · local work available':'افلاین · محلي کار شته')}</b></div>
+    <div><span>${en?'Admin transfer permission':'د ادارې د لېږد اجازه'}</span><b class="${permission?'good':'warn'}">${permission?(en?'Allowed for this account':'دې حساب ته اجازه شته'):(en?'Business transfer blocked':'د معلوماتو لېږد بند دی')}</b></div>
+    <div><span>${en?'This device transfer':'د دې وسیلې لېږد'}</span><b class="${flGoogleDataSyncEnabledV365?'good':'warn'}">${flGoogleDataSyncEnabledV365?(en?'Upload/download ON':'اپلوډ/ډاونلوډ چالان'):(en?'Upload/download OFF':'اپلوډ/ډاونلوډ بند')}</b></div>
+    <div><span>${en?'Browser database':'د براوزر ډیټابیس'}</span><b class="${info.lastLocalSaveAt?'good':'warn'}">${localState} · ${formatBytes(info.fieldLedgerBytes)}</b></div>
+    <div><span>${en?'Pending changes':'پاتې بدلونونه'}</span><b>${Number(info.queueCount)||0} · ${formatBytes(info.queueBytes)}</b></div>
+    <div><span>${en?'Dedicated local folder':'ځانګړی محلي فولډر'}</span><b class="${folder.ready?'good':'warn'}">${folderState}</b></div>
+    <div><span>${en?'Last local save':'وروستی محلي خوندي کول'}</span><b>${info.lastLocalSaveAt?backupStamp(info.lastLocalSaveAt):t('backupNever')}</b></div>
+    <div><span>${en?'Last data transfer':'د معلوماتو وروستی لېږد'}</span><b>${(await getMeta()).lastSyncAt?backupStamp((await getMeta()).lastSyncAt):t('backupNever')}</b></div>
+  </div>
+  <div class="fl-unified-actions">
+    <button class="btn btn-primary" data-fl-unified-transfer ${permission&&flGoogleDataSyncEnabledV365?'':'disabled'}>${en?'Upload/download changes now':'اوس بدلونونه اپلوډ/ډاونلوډ کړئ'}</button>
+    <button class="btn btn-ghost" data-fl-unified-test>${en?'Test backend connection':'د backend اړیکه وازمویئ'}</button>
+    <button class="btn btn-ghost" data-fl-unified-folder>${folder.registered?(en?'Reconnect local folder':'محلي فولډر بیا وصل کړئ'):(en?'Choose local folder':'محلي فولډر وټاکئ')}</button>
+    ${folder.connected?`<button class="btn btn-ghost" data-fl-unified-folder-now>${en?'Save local folder now':'اوس محلي فولډر خوندي کړئ'}</button>`:''}
+    <button class="btn btn-ghost" data-fl-unified-snapshot>${en?'Create local recovery copy':'محلي خوندي کاپي جوړه کړئ'}</button>
+    <button class="btn btn-ghost" data-fl-unified-install>${flIsInstalled()?(en?'App installed':'اپ نصب دی'):(en?'Install app / home-screen icon':'اپ نصب / د کور سکرین نښه')}</button>
+    ${admin?`<button class="btn btn-ghost" data-fl-unified-folder-recover>${en?'Recover from local folder':'له محلي فولډر څخه بېرته راوګرځوئ'}</button>`:''}
+  </div>
+  <label class="fl-unified-toggle"><input type="checkbox" data-fl-unified-wake ${prefs.keepAwakeDuringSync?'checked':''}><span><b>${en?'Keep the screen awake during pending transfers':'د پاتې لېږد پر مهال سکرین ویښ وساتئ'}</b><br>${en?'Useful for large image transfers on Android tablets.':'په Android ټابلیټ کې د لویو عکسونو د لېږد لپاره ګټور دی.'}</span></label>
+  <div class="fl-unified-role"><b>${admin?(en?'Administrator controls':'د اډمین کنټرولونه'):(en?'Editor controls':'د اېډېټر کنټرولونه')}</b> · ${admin?(en?'Import, restore, Google master and cloud maintenance controls are available below.':'د فایل داخلول، بېرته راوستل، Google اصل او د cloud ساتنې کنټرولونه لاندې شته.'):(en?'You can save, download, share, transfer and maintain this device. Destructive recovery and Google-master controls are administrator-only.':'تاسو کولی شئ دا وسیله خوندي، ډاونلوډ، شریک او لېږد کړئ. خطرناک recovery او Google-master کنټرولونه یوازې د اډمین لپاره دي.')}</div>`;
+  const stats=body.querySelector('.fl-offline-stats');
+  (stats||body.firstElementChild)?.after(section);
+
+  const transfer=section.querySelector('[data-fl-unified-transfer]');
+  transfer.onclick=()=>syncNow({forcePull:false,forceRetry:true}).then(()=>flRenderUnifiedStorageV383()).catch(error=>toast(error.message));
+  section.querySelector('[data-fl-unified-test]').onclick=()=>flCheckBackendCompatibilityV381().then(status=>toast(`${en?'Connected':'وصل دی'} · ${status.backendVersion} · schema ${status.schema}`)).catch(error=>toast(error.message));
+  section.querySelector('[data-fl-unified-folder]').onclick=()=>((folder.registered?folderReconnectPermission():folderSetupInteractive())).then(()=>flRenderUnifiedStorageV383()).catch(error=>toast(error.message));
+  const folderNow=section.querySelector('[data-fl-unified-folder-now]');if(folderNow)folderNow.onclick=()=>folderMirrorNow().then(()=>flRenderUnifiedStorageV383()).catch(error=>toast(error.message));
+  section.querySelector('[data-fl-unified-snapshot]').onclick=async()=>{await makeRecoverySnapshot('manual',await kvGet(K.STATE));toast(en?'Local recovery copy created':'محلي خوندي کاپي جوړه شوه');await flRenderUnifiedStorageV383();};
+  section.querySelector('[data-fl-unified-install]').onclick=()=>flPromptInstall();
+  section.querySelector('[data-fl-unified-wake]').onchange=async event=>{await flSetSyncPrefs({keepAwakeDuringSync:event.target.checked});await flQueueProtectionRefresh();};
+  const folderRecover=section.querySelector('[data-fl-unified-folder-recover]');if(folderRecover)folderRecover.onclick=()=>folderRecoverInteractive();
+
+  if(!admin){
+    body.querySelectorAll('[data-fl-offline-import],[data-fl-offline-file],[data-fl-recovery-restore]').forEach(node=>node.remove());
+  }else{
+    const cloud=document.createElement('section');
+    cloud.className='fl-unified-section';
+    cloud.dataset.flUnifiedAdmin='1';
+    cloud.innerHTML=`<h3>${en?'Administrator cloud maintenance':'د اډمین cloud ساتنه'}</h3><p>${en?'These actions affect Google storage or reports. They are hidden from editors. Normal data transfer uses the controls above.':'دا کړنې Google ذخیره یا راپورونه بدلوي او له اېډېټرانو پټې دي. عادي معلوماتي لېږد پورته کنټرولونه کاروي.'}</p><div class="fl-unified-actions"><button class="btn btn-ghost" data-fl-unified-drive-backup>${en?'Create Google backup now':'اوس Google بیک اپ جوړ کړئ'}</button><button class="btn btn-ghost" data-fl-unified-compact>${en?'Clean old temporary Google chunks':'زاړه لنډمهاله Google ټوټې پاکې کړئ'}</button><button class="btn btn-ghost" data-fl-unified-monthly>${en?'Rebuild monthly reports':'میاشتني راپورونه بیا جوړ کړئ'}</button></div>`;
+    body.appendChild(cloud);
+    cloud.querySelector('[data-fl-unified-drive-backup]').onclick=()=>api('createBackup',{}, {timeout:180000}).then(()=>toast(en?'Google backup created':'Google بیک اپ جوړ شو')).catch(error=>toast(error.message));
+    cloud.querySelector('[data-fl-unified-compact]').onclick=async()=>{if(!confirm(en?'Clean abandoned temporary chunks? Current data, previous data, backups and images will remain untouched.':'پاتې لنډمهاله ټوټې پاکې کړئ؟ اوسني او پخواني معلومات، بیک اپونه او عکسونه به نه بدلېږي.'))return;try{const result=await api('compactStorage',{}, {timeout:180000});toast(`${en?'Temporary items removed':'لنډمهاله توکي پاک شول'} · ${Number(result.temporaryTransfersRemoved||result.legacyStateFoldersRemoved)||0}`);}catch(error){toast(error.message);}};
+    cloud.querySelector('[data-fl-unified-monthly]').onclick=()=>api('rebuildMonthly',{}, {timeout:30000}).then(()=>toast(en?'Monthly report rebuild queued':'د میاشتني راپور بیا جوړول کتار ته ولاړ')).catch(error=>toast(error.message));
+  }
+  flRefreshGoogleSyncUiV365();
+}
+flRenderOfflineDataV365=flRenderUnifiedStorageV383;
+function flInstallUnifiedStorageV383(){
+  flInstallOfflineDataV365();
+  const old=$('#umOfflineData'),button=$('#umStorageSync');
+  if(old){old.hidden=true;old.style.display='none';old.setAttribute('aria-hidden','true');old.tabIndex=-1;}
+  flUnifiedLabelV383();
+  if(button)button.onclick=event=>{event.preventDefault();event.stopPropagation();const role=flUnifiedRoleV383();if(!['admin','editor'].includes(role))return;flUnifiedCloseMenusV383();flOfflineDataModalV365.classList.add('show');flRenderUnifiedStorageV383().catch(error=>toast(error.message));};
+  if(flStorageCenter)flStorageCenter.classList.remove('show');
+}
+const flApplyLangBeforeV383=applyLang;
+applyLang=function(...args){const result=flApplyLangBeforeV383(...args);flUnifiedLabelV383();return result;};
+flInstallUnifiedStorageV383();
+
 setTimeout(flWeeklySdCatchUpV370,8000);setInterval(flWeeklySdCatchUpV370,60*60*1000);
 restoreLocalOnBoot=restoreBoot;
 setTimeout(async()=>{try{const meta=await getMeta();if(!meta.historicalDeletionRecoveryV364Done)await setMeta({historicalDeletionRecoveryV364Done:true});const index=await kvGet(K.IMAGE_INDEX);if(index)await kvDel(K.LAST_SYNCED);}catch(error){console.warn('deferred low-memory migration',error);}},120000);
@@ -2382,6 +2502,6 @@ setTimeout(async()=>{try{const meta=await getMeta();if(!meta.historicalDeletionR
 ;
 applyLang();(async()=>{try{await restoreLocalOnBoot();document.body.classList.remove('booting');applyLang();renderLibrary();await checkDailyDriveBackup();}catch(e){console.warn('boot or backup initialization skipped',e);renderLibrary();}finally{document.body.classList.remove('booting');}})();
 </script>
-<script src="./activation-panel.js?v=382" defer></script>
+<script src="./activation-panel.js?v=383" defer></script>
 </body>
 </html>
