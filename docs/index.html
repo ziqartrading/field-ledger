@@ -10,7 +10,7 @@
 <meta name="field-ledger-app" content="Field Ledger">
 <meta name="field-ledger-version" content="3.8.3">
 <meta name="field-ledger-schema" content="10">
-<meta name="field-ledger-build" content="2026-07-22-offline-tablet-resilience">
+<meta name="field-ledger-build" content="2026-07-24-tablet-sync-reliability-r3">
 <title>Ziqar Trading</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2502,6 +2502,6 @@ setTimeout(async()=>{try{const meta=await getMeta();if(!meta.historicalDeletionR
 ;
 applyLang();(async()=>{try{await restoreLocalOnBoot();document.body.classList.remove('booting');applyLang();renderLibrary();await checkDailyDriveBackup();}catch(e){console.warn('boot or backup initialization skipped',e);renderLibrary();}finally{document.body.classList.remove('booting');}})();
 </script>
-<script src="./activation-panel.js?v=383" defer></script>
+<script src="./activation-panel.js?v=383r3" defer></script>
 </body>
 </html>

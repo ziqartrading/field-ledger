@@ -248,6 +248,196 @@
   installAscendingBookIndexR2();
   installForegroundTabletSyncR2();
 
+
+  /* ===== Tablet synchronization reliability r3 ===== */
+  const FL_TABLET_SYNC_PATCH_R3='2026-07-24-tablet-sync-r3';
+  const FL_TABLET_CHUNK_SIZE_R3=700000;
+  const FL_DEVICE_SYNC_ACTIONS_R3=new Set([
+    'syncQueueJoin','syncQueueStatus','syncQueueRelease','syncHead','pullManifest','pullChunk','imageIndex',
+    'pushStart','pushChunk','pushCommit','uploadStatus','restoreStart','restoreChunk','restoreCommit',
+    'importStart','importChunk','importCommit'
+  ]);
+  async function flDeviceIdR3(task){
+    if(task&&task.deviceId)return String(task.deviceId);
+    const meta=typeof getMeta==='function'?await getMeta():{};
+    return String(meta&&meta.deviceId||'');
+  }
+
+  /* Every queued request must use the same device identity that joined the queue.
+     Older code omitted it from chunk/status/commit calls and could lose its turn. */
+  if(typeof api==='function'&&!api.__tabletDeviceIdentityR3){
+    const flApiBeforeTabletR3=api;
+    const flApiTabletR3=async function(action,payload,options){
+      const name=String(action||'');
+      let next=payload&&typeof payload==='object'?payload:{};
+      if(FL_DEVICE_SYNC_ACTIONS_R3.has(name)&&!next.deviceId){
+        const deviceId=await flDeviceIdR3();
+        if(deviceId)next=Object.assign({},next,{deviceId:deviceId});
+      }
+      return flApiBeforeTabletR3(name,next,options||{});
+    };
+    flApiTabletR3.__tabletDeviceIdentityR3=true;
+    api=flApiTabletR3;
+  }
+
+  /* Cache the server image index after a successful refresh. This keeps later
+     uploads sparse instead of repeatedly rebuilding a large image package. */
+  if(typeof flGetImageIndexV364==='function'&&!flGetImageIndexV364.__cacheIndexR3){
+    const flGetImageIndexBeforeR3=flGetImageIndexV364;
+    const flGetImageIndexR3=async function(force){
+      const index=await flGetImageIndexBeforeR3(!!force);
+      if(index&&typeof kvSet==='function'&&typeof K!=='undefined'&&K.IMAGE_INDEX)await kvSet(K.IMAGE_INDEX,index);
+      return index;
+    };
+    flGetImageIndexR3.__cacheIndexR3=true;
+    flGetImageIndexV364=flGetImageIndexR3;
+  }
+
+  let flQueueHeartbeatR3=null,flQueueHeartbeatBusyR3=false;
+  function flStopQueueHeartbeatR3(){if(flQueueHeartbeatR3){clearInterval(flQueueHeartbeatR3);flQueueHeartbeatR3=null;}flQueueHeartbeatBusyR3=false;}
+  function flStartQueueHeartbeatR3(){
+    flStopQueueHeartbeatR3();
+    flQueueHeartbeatR3=setInterval(async function(){
+      if(flQueueHeartbeatBusyR3||!flGoogleDataSyncEnabledV365||!backendToken||!navigator.onLine)return;
+      flQueueHeartbeatBusyR3=true;
+      try{
+        const deviceId=await flDeviceIdR3(),status=await api('syncQueueJoin',{deviceId:deviceId},{timeout:25000});
+        flSyncQueueStatusV382=status||flSyncQueueStatusV382;
+        flSyncTurnHeldV382=!!(status&&status.granted);
+        if(typeof flUpdateSyncQueueUiV382==='function')flUpdateSyncQueueUiV382();
+      }catch(error){console.warn('sync turn heartbeat',error);}
+      finally{flQueueHeartbeatBusyR3=false;}
+    },90000);
+  }
+  if(typeof flAcquireSyncTurnV382==='function'&&!flAcquireSyncTurnV382.__heartbeatR3){
+    const flAcquireTurnBeforeR3=flAcquireSyncTurnV382;
+    const flAcquireTurnR3=async function(){const status=await flAcquireTurnBeforeR3();flStartQueueHeartbeatR3();return status;};
+    flAcquireTurnR3.__heartbeatR3=true;flAcquireSyncTurnV382=flAcquireTurnR3;
+  }
+  if(typeof flReleaseSyncTurnV382==='function'&&!flReleaseSyncTurnV382.__heartbeatR3){
+    const flReleaseTurnBeforeR3=flReleaseSyncTurnV382;
+    const flReleaseTurnR3=async function(){flStopQueueHeartbeatR3();return flReleaseTurnBeforeR3();};
+    flReleaseTurnR3.__heartbeatR3=true;flReleaseSyncTurnV382=flReleaseTurnR3;
+  }
+
+  async function flPrepareUploadTaskR3(task){
+    if(!task)return task;
+    const currentSize=Math.max(1,Number(task.chunkSize)||FL_TABLET_CHUNK_SIZE_R3);
+    const needsMigration=task.transportPatch!==FL_TABLET_SYNC_PATCH_R3||currentSize>FL_TABLET_CHUNK_SIZE_R3;
+    if(needsMigration){
+      /* Pending operations remain in IndexedDB. Only the temporary network
+         package is restarted with smaller chunks and a new idempotency key. */
+      if(typeof restartUploadForCurrentUser==='function')await restartUploadForCurrentUser(task);
+      else{task.uploadId='';task.nextChunk=0;task.changeId=uid(task.kind==='restore'?'RESTORE':task.kind==='import'?'IMPORT':'CHANGE');task.attempts=0;task.nextRetryAt=0;task.lastError='';}
+      task.version=Math.max(7,Number(task.version)||0);
+      task.transportPatch=FL_TABLET_SYNC_PATCH_R3;
+      task.chunkSize=FL_TABLET_CHUNK_SIZE_R3;
+      task.chunkCount=Math.max(1,Math.ceil(String(task.text||'').length/task.chunkSize));
+      await saveTask(task);
+    }
+    return task;
+  }
+
+  async function flResumeUploadSerialR3(task,options){
+    options=options||{};
+    if(!task)return null;
+    if(task.kind==='state'){
+      try{JSON.parse(String(task.text||''));}
+      catch(_){await kvDel(K.UPLOAD_TASK);task=await buildUploadTask('state',{force:true});if(!task)throw Object.assign(new Error('The local synchronization package could not be rebuilt.'),{code:'LOCAL_STATE_INVALID'});}
+    }
+    task=await flPrepareUploadTaskR3(task);
+    const owner=uploadTaskOwner();
+    if(task.kind==='state'&&task.ownerUserId&&owner&&String(task.ownerUserId)!==String(owner)){await restartUploadForCurrentUser(task);task=await flPrepareUploadTaskR3(task);}
+    if(!options.forceRetry&&Number(task.nextRetryAt)>Date.now())throw Object.assign(new Error('Synchronization is waiting before the next retry.'),{code:'RETRY_WAIT'});
+    const actions=uploadActions(task.kind),parts=chunkText(String(task.text||''),Number(task.chunkSize)||FL_TABLET_CHUNK_SIZE_R3),meta=await getMeta(),deviceId=String(task.deviceId||meta.deviceId||'');
+    try{
+      let startedNow=false;
+      if(!task.uploadId){
+        setStatus('syncing',text('Preparing Google upload…','Google اپلوډ چمتو کېږي…'));
+        const started=await api(actions.start,{kind:task.kind,deviceId:deviceId,baseRevision:task.baseRevision,chunkCount:parts.length,hash:task.hash,size:task.size,changeId:task.changeId},{timeout:45000});
+        if(started.alreadyCommitted)return{revision:Number(started.revision)||0,hash:String(started.hash||''),alreadyCommitted:true,requiresPull:!!started.requiresPull};
+        task.ownerUserId=owner;task.uploadId=started.uploadId;task.nextChunk=0;startedNow=!started.resumed;await saveTask(task);
+      }
+      let received=new Set();
+      if(!startedNow){
+        try{
+          const status=await api('uploadStatus',{uploadId:task.uploadId,deviceId:deviceId},{timeout:45000});
+          if(status.committed)return{revision:Number(status.revision)||0,hash:String(status.hash||''),alreadyCommitted:true,requiresPull:!!status.requiresPull};
+          received=new Set((status.receivedIndexes||[]).map(Number));
+        }catch(error){
+          if((error.code==='UPLOAD_NOT_FOUND'||error.code==='FORBIDDEN')&&!options.restarted){await restartUploadForCurrentUser(task);return flResumeUploadSerialR3(task,Object.assign({},options,{forceRetry:true,restarted:true}));}
+          throw error;
+        }
+      }
+      const missing=parts.map(function(_,index){return index;}).filter(function(index){return !received.has(index);});
+      /* Apps Script and Drive are deliberately used one request at a time.
+         Parallel chunk calls were racing over the queue lease and temp folder. */
+      for(let offset=0;offset<missing.length;offset++){
+        const index=missing[offset];
+        setStatus('syncing',text('Uploading part '+(received.size+1)+' of '+parts.length,'برخه '+(received.size+1)+' له '+parts.length+' څخه اپلوډ کېږي'));
+        await api(actions.chunk,{uploadId:task.uploadId,index:index,data:parts[index],deviceId:deviceId},{timeout:120000});
+        received.add(index);task.nextChunk=received.size;await saveTask(task);
+        if(typeof flTouchSyncLease==='function')await flTouchSyncLease(flSyncLeaseOwner);
+        await new Promise(function(resolve){setTimeout(resolve,0);});
+      }
+      setStatus('syncing',text('Google received every part · finalizing…','Google ټولې برخې ترلاسه کړې · بشپړېږي…'));
+      return await api(actions.commit,{uploadId:task.uploadId,deviceId:deviceId},{timeout:330000});
+    }catch(error){
+      const recoverable=['UPLOAD_INCOMPLETE','CHECKSUM_FAILED','INVALID_JSON','UPLOAD_NOT_FOUND','STATE_WRITE_INCOMPLETE'].includes(String(error&&error.code||''));
+      if(recoverable&&!options.restarted){await restartUploadForCurrentUser(task);return flResumeUploadSerialR3(task,Object.assign({},options,{forceRetry:true,restarted:true}));}
+      task.attempts=(Number(task.attempts)||0)+1;task.nextRetryAt=Date.now()+Math.min(15*60*1000,5000*Math.pow(2,Math.min(task.attempts-1,7)));task.lastError=error&&error.message||String(error);await saveTask(task);throw error;
+    }
+  }
+
+  if(typeof resumeUploadTask==='function'&&!resumeUploadTask.__serialTabletR3){
+    const flResumeUploadR3=async function(task,options){
+      options=options||{};
+      try{return await flResumeUploadSerialR3(task,options);}
+      catch(error){
+        if(error&&error.code==='IMAGE_REF_MISSING'&&task&&!options.indexRefreshed){
+          await flGetImageIndexV364(true);await kvDel(K.UPLOAD_TASK);
+          const rebuilt=await buildUploadTask('state',{force:true});
+          if(rebuilt)return flResumeUploadR3(rebuilt,Object.assign({},options,{forceRetry:true,indexRefreshed:true}));
+        }
+        throw error;
+      }
+    };
+    flResumeUploadR3.__serialTabletR3=true;resumeUploadTask=flResumeUploadR3;
+  }
+
+  /* Do not silently accept the old backend: its 3.8.2 version string is the
+     same even when the queue reliability patch was never deployed. */
+  if(typeof flCheckBackendCompatibilityV381==='function'&&!flCheckBackendCompatibilityV381.__requiresR3){
+    const flCheckBackendBeforeR3=flCheckBackendCompatibilityV381;
+    const flCheckBackendR3=async function(){
+      const status=await flCheckBackendBeforeR3();
+      if(String(status&&status.syncQueuePatch||'')!==FL_TABLET_SYNC_PATCH_R3)throw Object.assign(new Error(text('The tablet synchronization backend patch is not deployed. Update the existing Apps Script deployment with the r3 Code.gs, then try again.','د ټابلیټ د سینک backend اصلاح لا نه ده خپره شوې. د Apps Script موجود deployment د r3 Code.gs سره تازه کړئ او بیا هڅه وکړئ.')),{code:'BACKEND_SYNC_PATCH_REQUIRED',status:status});
+      return status;
+    };
+    flCheckBackendR3.__requiresR3=true;flCheckBackendCompatibilityV381=flCheckBackendR3;
+  }
+
+  async function flRepairPendingUploadR3(){
+    await localChain;
+    const task=await kvGet(K.UPLOAD_TASK);
+    if(task)await kvDel(K.UPLOAD_TASK);
+    await setMeta({lastError:''});
+    setStatus('pending',text('Rebuilding the pending upload safely…','پاتې اپلوډ په خوندي ډول بیا جوړېږي…'));
+    return syncNow({forceRetry:true,silent:false,__foregroundV363:true});
+  }
+  function flInstallRepairButtonR3(){
+    const root=flOfflineDataModalV365&&flOfflineDataModalV365.querySelector('[data-fl-offline-body]');if(!root)return;
+    const actions=root.querySelector('[data-fl-unified-device] .fl-unified-actions')||root.querySelector('.fl-unified-actions');if(!actions||actions.querySelector('[data-fl-repair-upload-r3]'))return;
+    const button=document.createElement('button');button.type='button';button.className='btn btn-ghost';button.dataset.flRepairUploadR3='1';button.textContent=text('Repair pending upload & retry','پاتې اپلوډ ورغوئ او بیا هڅه وکړئ');
+    button.onclick=async function(){button.disabled=true;try{await flRepairPendingUploadR3();await flRenderUnifiedStorageV383();}catch(error){toast(error&&error.message||String(error));}finally{button.disabled=false;}};
+    actions.appendChild(button);
+  }
+  if(typeof flRenderUnifiedStorageV383==='function'&&!flRenderUnifiedStorageV383.__repairButtonR3){
+    const flRenderUnifiedBeforeR3=flRenderUnifiedStorageV383;
+    const flRenderUnifiedR3=async function(){const result=await flRenderUnifiedBeforeR3();flInstallRepairButtonR3();return result;};
+    flRenderUnifiedR3.__repairButtonR3=true;flRenderUnifiedStorageV383=flRenderUnifiedR3;flRenderOfflineDataV365=flRenderUnifiedStorageV383;
+  }
+
   installPasswordGuidance();
   addEventListener('load',function(){
     wasOpen=usersOpen();if(wasOpen)loadCode(true);
