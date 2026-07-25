@@ -407,14 +407,19 @@
 
   /* Do not silently accept the old backend: its 3.8.2 version string is the
      same even when the queue reliability patch was never deployed. */
-  if(typeof flCheckBackendCompatibilityV381==='function'&&!flCheckBackendCompatibilityV381.__requiresR3){
-    const flCheckBackendBeforeR3=flCheckBackendCompatibilityV381;
-    const flCheckBackendR3=async function(){
-      const status=await flCheckBackendBeforeR3();
-      if(String(status&&status.syncQueuePatch||'')!==FL_TABLET_SYNC_PATCH_R3)throw Object.assign(new Error(text('The tablet synchronization backend patch is not deployed. Update the existing Apps Script deployment with the r3 Code.gs, then try again.','د ټابلیټ د سینک backend اصلاح لا نه ده خپره شوې. د Apps Script موجود deployment د r3 Code.gs سره تازه کړئ او بیا هڅه وکړئ.')),{code:'BACKEND_SYNC_PATCH_REQUIRED',status:status});
+  /* r8: the client transport patch and backend queue patch are separate versions.
+     r7 incorrectly demanded an exact r4 string, which rejected the newer r5 backend
+     before pushStart could run. Accept backend tablet-sync-r4 or any newer revision. */
+  const FL_BACKEND_SYNC_MIN_REV_R8=4;
+  function flBackendSyncPatchRevisionR8(value){const match=String(value||'').match(/tablet-sync-r(\d+)$/i);return match?Number(match[1])||0:0;}
+  if(typeof flCheckBackendCompatibilityV381==='function'&&!flCheckBackendCompatibilityV381.__requiresR8){
+    const flCheckBackendBeforeR8=flCheckBackendCompatibilityV381;
+    const flCheckBackendR8=async function(){
+      const status=await flCheckBackendBeforeR8(),patch=String(status&&status.syncQueuePatch||''),revision=flBackendSyncPatchRevisionR8(patch);
+      if(revision<FL_BACKEND_SYNC_MIN_REV_R8)throw Object.assign(new Error(text('The tablet synchronization backend patch is missing or too old. Deploy backend tablet-sync-r4 or newer, then try again.','د ټابلیټ د سینک backend اصلاح نشته یا ډېره پخوانۍ ده. tablet-sync-r4 یا نوې نسخه خپره کړئ او بیا هڅه وکړئ.')),{code:'BACKEND_SYNC_PATCH_REQUIRED',status:status});
       return status;
     };
-    flCheckBackendR3.__requiresR3=true;flCheckBackendCompatibilityV381=flCheckBackendR3;
+    flCheckBackendR8.__requiresR8=true;flCheckBackendCompatibilityV381=flCheckBackendR8;
   }
 
   async function flRepairPendingUploadR3(){
@@ -443,6 +448,7 @@
   const FL_CONNECTION_PATCH_R5='tablet-sync-r5';
   const FL_MAIN_PROGRESS_PATCH_R6='2026-07-25-main-transfer-progress-r6';
   const FL_FOREGROUND_PROGRESS_PATCH_R7='2026-07-25-foreground-progress-r7';
+  const FL_SYNC_DIAG_FIX_R8='2026-07-26-backend-patch-compat-session-r8';
   const FL_SYNC_PROGRESS_PATCH_R4='2026-07-24-tablet-sync-r4';
   let flProgressR4={stage:'idle',direction:'upload',percent:0,uploadedBytes:0,totalBytes:0,confirmedParts:0,totalParts:0,message:'',error:'',errorCode:'',retryAt:0,updatedAt:Date.now()};
   let flConfirmedPartsR4=new Set(),flDownloadedPartsR6=new Map(),flDownloadManifestR6=null,flProgressTimerR4=null;
