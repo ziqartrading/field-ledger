@@ -10,7 +10,7 @@
 <meta name="field-ledger-app" content="Field Ledger">
 <meta name="field-ledger-version" content="3.8.3">
 <meta name="field-ledger-schema" content="12">
-<meta name="field-ledger-build" content="2026-07-25-main-transfer-progress-r6">
+<meta name="field-ledger-build" content="2026-07-25-foreground-progress-r7">
 <title>Ziqar Trading</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1658,7 +1658,7 @@ async function renderTabletSection(){
 function flInstallTabletSyncFeatures(){
   if(flTabletFeaturesInstalled)return;flTabletFeaturesInstalled=true;flInstallTabletStyles();
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();flInstallPrompt=e;renderTabletSectionSoon();});window.addEventListener('appinstalled',()=>{flInstallPrompt=null;renderTabletSectionSoon();});
-  if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(!e.data)return;if(e.data.type==='FIELD_LEDGER_SYNC_REQUESTED'&&currentUser&&backendToken&&navigator.onLine)syncNow({forceRetry:true,silent:true}).catch(()=>{});if(e.data.type==='FIELD_LEDGER_BACKGROUND_SYNC_DONE'&&currentUser&&backendToken&&navigator.onLine)syncNow({silent:true}).catch(()=>{});});
+  if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(!e.data)return;if(e.data.type==='FIELD_LEDGER_SYNC_REQUESTED'&&currentUser&&backendToken&&navigator.onLine)syncNow({forceRetry:true,silent:true,__foregroundV363:true}).catch(()=>{});if(e.data.type==='FIELD_LEDGER_BACKGROUND_SYNC_DONE'&&currentUser&&backendToken&&navigator.onLine)syncNow({silent:true,__foregroundV363:true}).catch(()=>{});});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){flQueueProtectionRefresh().catch(()=>{});if(currentUser&&backendToken&&navigator.onLine)scheduleSync(200);}else flHandoffBackgroundSync('hidden').catch(()=>{});});
   window.addEventListener('pagehide',()=>flHandoffBackgroundSync('pagehide').catch(()=>{}));document.addEventListener('freeze',()=>flHandoffBackgroundSync('freeze').catch(()=>{}));
   window.addEventListener('online',()=>{flQueueProtectionRefresh().catch(()=>{});flRegisterPeriodicSync().catch(()=>{});});window.addEventListener('offline',()=>flReleaseWakeLock().catch(()=>{}));
@@ -2039,7 +2039,7 @@ if('serviceWorker'in navigator)navigator.serviceWorker.addEventListener('message
 async function flWorkerCapabilitiesV363(){if(!('serviceWorker'in navigator))return null;const registration=await navigator.serviceWorker.ready,worker=navigator.serviceWorker.controller||registration.active;if(!worker)return null;const requestId=uid('SWCAP'),response=new Promise(resolve=>{flWorkerRequestsV363.set(requestId,resolve);setTimeout(()=>{if(flWorkerRequestsV363.has(requestId)){flWorkerRequestsV363.delete(requestId);resolve(null);}},900);});worker.postMessage({type:'FIELD_LEDGER_CAPABILITIES_REQUEST',requestId});return response;}
 async function flDelegateUploadV363(){const capabilities=await flWorkerCapabilitiesV363();if(!capabilities||!capabilities.foregroundUpload||!versionAtLeast(capabilities.version,'3.8.2'))return false;const registration=await navigator.serviceWorker.ready,worker=navigator.serviceWorker.controller||registration.active;if(!worker)return false;worker.postMessage({type:'FIELD_LEDGER_RUN_BACKGROUND_SYNC',reason:'foreground-safe-upload',allowVisible:true,at:Date.now()});return true;}
 const flSyncNowBaseV363=syncNow;
-syncNow=async function(options={}){if(options&&options.__foregroundV363)return flSyncNowBaseV363(options);if(flUserEditing())return flSyncNowBaseV363(options);if(currentUser&&backendToken&&navigator.onLine){await localChain;const pending=await pendingSummary();if(pending.count||pending.task){if(await flDelegateUploadV363()){setStatus('syncing',LANG==='ps'?'په خوندي شالید کې اپلوډ کېږي…':'Uploading safely outside the entry screen…');return{delegated:true,background:true};}}}return flSyncNowBaseV363(options);};
+syncNow=async function(options={}){const opts=Object.assign({},options||{},{__foregroundV363:true});return flSyncNowBaseV363(opts);};
 
 const flLoadUsersBaseV363=loadUsers;
 loadUsers=async function(options={}){const force=!!(options&&options.force);if(!force&&flUserDirectoryLoadedAtV363&&Date.now()-flUserDirectoryLoadedAtV363<8000)return ACCOUNTS;const result=await flLoadUsersBaseV363();flUserDirectoryLoadedAtV363=Date.now();return result;};
@@ -2502,6 +2502,6 @@ setTimeout(async()=>{try{const meta=await getMeta();if(!meta.historicalDeletionR
 ;
 applyLang();(async()=>{try{await restoreLocalOnBoot();document.body.classList.remove('booting');applyLang();renderLibrary();await checkDailyDriveBackup();}catch(e){console.warn('boot or backup initialization skipped',e);renderLibrary();}finally{document.body.classList.remove('booting');}})();
 </script>
-<script src="./activation-panel.js?v=383r6" defer></script>
+<script src="./activation-panel.js?v=383r7" defer></script>
 </body>
 </html>
