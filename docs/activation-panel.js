@@ -250,8 +250,8 @@
 
 
   /* ===== Tablet synchronization reliability r3 ===== */
-  const FL_TABLET_SYNC_PATCH_R3='2026-07-24-tablet-sync-r4';
-  const FL_TABLET_CHUNK_SIZE_R3=350000;
+  const FL_TABLET_SYNC_PATCH_R3='2026-07-26-single-flight-download-session-r13';
+  const FL_TABLET_CHUNK_SIZE_R3=150000;
   const FL_DEVICE_SYNC_ACTIONS_R3=new Set([
     'syncQueueJoin','syncQueueStatus','syncQueueRelease','syncHead','pullManifest','pullChunk','imageIndex',
     'pushStart','pushChunk','pushCommit','uploadStatus','restoreStart','restoreChunk','restoreCommit',
@@ -374,8 +374,9 @@
          Parallel chunk calls were racing over the queue lease and temp folder. */
       for(let offset=0;offset<missing.length;offset++){
         const index=missing[offset];
-        setStatus('syncing',text('Uploading part '+(received.size+1)+' of '+parts.length,'برخه '+(received.size+1)+' له '+parts.length+' څخه اپلوډ کېږي'));
-        await api(actions.chunk,{uploadId:task.uploadId,index:index,data:parts[index],deviceId:deviceId},{timeout:120000});
+        const before=flConfirmedBytesR4(task);flSetProgressR4({stage:'uploading',direction:'upload',percent:Math.floor(before.bytes*100/Math.max(1,before.total)),uploadedBytes:before.bytes,totalBytes:before.total,confirmedParts:received.size,totalParts:parts.length,message:text('Sending part '+(index+1)+' of '+parts.length+' · waiting for Google acknowledgement','برخه '+(index+1)+' له '+parts.length+' څخه لېږل کېږي · د Google تایید ته انتظار')});
+        setStatus('syncing',text('Uploading part '+(index+1)+' of '+parts.length,'برخه '+(index+1)+' له '+parts.length+' څخه اپلوډ کېږي'));
+        let chunkResult;try{chunkResult=await api(actions.chunk,{uploadId:task.uploadId,index:index,data:parts[index],deviceId:deviceId},{timeout:180000});}catch(firstError){const code=String(firstError&&firstError.code||'');if(!['GOOGLE_FORM_TRANSPORT_FAILED','API_TIMEOUT','NETWORK_BLOCKED','FORM_TIMEOUT','FORM_RESPONSE_NOT_DELIVERED'].includes(code))throw firstError;await new Promise(function(resolve){setTimeout(resolve,900);});chunkResult=await api(actions.chunk,{uploadId:task.uploadId,index:index,data:parts[index],deviceId:deviceId},{timeout:180000});}
         received.add(index);task.nextChunk=received.size;await saveTask(task);
         if(typeof flTouchSyncLease==='function')await flTouchSyncLease(flSyncLeaseOwner);
         await new Promise(function(resolve){setTimeout(resolve,0);});
@@ -383,7 +384,9 @@
       setStatus('syncing',text('Google received every part · finalizing…','Google ټولې برخې ترلاسه کړې · بشپړېږي…'));
       return await api(actions.commit,{uploadId:task.uploadId,deviceId:deviceId},{timeout:330000});
     }catch(error){
-      const recoverable=['UPLOAD_INCOMPLETE','CHECKSUM_FAILED','INVALID_JSON','UPLOAD_NOT_FOUND','STATE_WRITE_INCOMPLETE'].includes(String(error&&error.code||''));
+      const code=String(error&&error.code||'');
+      if(code==='UPLOAD_INCOMPLETE'&&!options.incompleteResume){task.nextRetryAt=0;task.lastError='';await saveTask(task);return flResumeUploadSerialR3(task,Object.assign({},options,{forceRetry:true,incompleteResume:true}));}
+      const recoverable=['CHECKSUM_FAILED','INVALID_JSON','UPLOAD_NOT_FOUND','STATE_WRITE_INCOMPLETE'].includes(code);
       if(recoverable&&!options.restarted){await restartUploadForCurrentUser(task);return flResumeUploadSerialR3(task,Object.assign({},options,{forceRetry:true,restarted:true}));}
       task.attempts=(Number(task.attempts)||0)+1;task.nextRetryAt=Date.now()+Math.min(15*60*1000,5000*Math.pow(2,Math.min(task.attempts-1,7)));task.lastError=error&&error.message||String(error);await saveTask(task);throw error;
     }
@@ -449,7 +452,7 @@
   const FL_MAIN_PROGRESS_PATCH_R6='2026-07-25-main-transfer-progress-r6';
   const FL_FOREGROUND_PROGRESS_PATCH_R7='2026-07-25-foreground-progress-r7';
   const FL_SYNC_DIAG_FIX_R8='2026-07-26-backend-patch-compat-session-r8';
-  const FL_FORM_TRANSPORT_PATCH_R9='2026-07-26-nested-form-transport-r10';
+  const FL_FORM_TRANSPORT_PATCH_R9='2026-07-26-single-flight-download-session-r13';
   const FL_SYNC_PROGRESS_PATCH_R4='2026-07-24-tablet-sync-r4';
   let flProgressR4={stage:'idle',direction:'upload',percent:0,uploadedBytes:0,totalBytes:0,confirmedParts:0,totalParts:0,message:'',error:'',errorCode:'',retryAt:0,updatedAt:Date.now()};
   let flConfirmedPartsR4=new Set(),flDownloadedPartsR6=new Map(),flDownloadManifestR6=null,flProgressTimerR4=null;
@@ -483,7 +486,7 @@
     const labels={idle:['Ready','چمتو'],queued:['Waiting for transfer turn','د لېږد نوبت ته انتظار'],preparing:['Preparing the transfer package','د لېږد بسته چمتو کېږي'],uploading:['Uploading confirmed parts to Google','Google ته تایید شوې برخې اپلوډ کېږي'],downloading:['Downloading confirmed parts from Google','له Google څخه تایید شوې برخې ډاونلوډ کېږي'],applying:['100% downloaded · applying safely on this device','۱۰۰٪ ډاونلوډ شو · په وسیله کې خوندي پلي کېږي'],finalizing:['100% uploaded · Google is validating and saving','۱۰۰٪ اپلوډ شو · Google یې تایید او خوندي کوي'],verifying:['Transfer accepted · checking the server copy','لېږد ومنل شو · د سرور کاپي کتل کېږي'],complete:['Synchronisation completed','سینک بشپړ شو'],pending:['Changes remain pending','بدلونونه لا پاتې دي'],scheduled:['Retry scheduled','بیا هڅه ټاکل شوې'],error:['Synchronisation paused','سینک ودرېد']};
     const pair=labels[stage]||labels.idle;return flLangR4()==='ps'?pair[1]:pair[0];
   }
-  function flSetProgressR4(update){flProgressR4=Object.assign({},flProgressR4,update||{},{updatedAt:Date.now()});flProgressR4.percent=Math.max(0,Math.min(100,Math.floor(Number(flProgressR4.percent)||0)));flRenderProgressR4();flRenderMainProgressR6();}
+  function flSetProgressR4(update){flProgressR4=Object.assign({},flProgressR4,update||{},{updatedAt:Date.now()});flProgressR4.percent=Math.max(0,Math.min(100,Math.floor(Number(flProgressR4.percent)||0)));window.flProgressStateR12=Object.assign({},flProgressR4);if(typeof window.flSetTransferProgressR12==='function')window.flSetTransferProgressR12(flProgressR4);flRenderProgressR4();flRenderMainProgressR6();}
   function flRetryTextR4(){const at=Number(flProgressR4.retryAt)||0;if(!at)return'';const remain=Math.max(0,Math.ceil((at-Date.now())/1000));if(!remain)return flTrR4('Retry is due now.','بیا هڅه اوس ده.');return flTrR4('Automatic retry in '+remain+' seconds.','اتومات بیا هڅه په '+remain+' ثانیو کې.');}
   function flMainProgressActiveR6(p){const stage=String(p&&p.stage||'idle');return ['queued','preparing','uploading','downloading','applying','finalizing','verifying','pending','scheduled','error','complete'].includes(stage)&&(stage!=='pending'||Number(p.totalBytes)>0||Number(p.retryAt)>0);}
   function flEnsureMainProgressR6(){
@@ -494,6 +497,7 @@
     return{badge:badge,label:label,percent:percent,detail:detail};
   }
   function flRenderMainProgressR6(){
+    if(typeof window.flSetTransferProgressR12==='function'){window.flSetTransferProgressR12(flProgressR4);return;}
     const ui=flEnsureMainProgressR6();if(!ui)return;const p=flProgressR4,active=flMainProgressActiveR6(p),total=Math.max(0,Number(p.totalBytes)||0),done=Math.max(0,Math.min(total||Number(p.uploadedBytes)||0,Number(p.uploadedBytes)||0)),remaining=Math.max(0,total-done),direction=String(p.direction||'upload')==='download'?'download':'upload';
     ui.badge.classList.toggle('fl-main-progress-r6-active',active);ui.detail.hidden=!active;ui.percent.hidden=!active;
     if(!active)return;
@@ -507,6 +511,7 @@
   }
   function flInstallMainProgressStylesR6(){if(document.getElementById('flMainProgressStylesR6'))return;const style=document.createElement('style');style.id='flMainProgressStylesR6';style.textContent='.fl-sync-badge.fl-main-progress-r6-active{display:flex!important;flex-wrap:wrap!important;align-items:center!important;max-width:470px!important;padding:8px 10px 9px!important;border-radius:13px!important;white-space:normal!important}.fl-sync-badge.fl-main-progress-r6-active>.fl-sync-main-label-r6{flex:1 1 190px!important;min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}.fl-main-percent-r6{flex:0 0 auto!important;display:block!important;font:800 11px/1 "Spline Sans Mono",monospace!important;color:var(--text)!important;overflow:visible!important}.fl-main-progress-r6{display:block!important;flex:1 0 100%!important;width:100%!important;padding-inline-start:14px!important;overflow:visible!important;white-space:normal!important}.fl-main-progress-r6[hidden]{display:none!important}.fl-main-track-r6{display:block!important;width:100%!important;height:8px!important;margin-top:7px!important;border-radius:999px!important;background:var(--surface-2)!important;border:1px solid var(--border)!important;overflow:hidden!important}.fl-main-track-r6>span{display:block!important;height:100%!important;width:0;background:var(--accent)!important;transition:width .22s ease!important}.fl-main-meta-r6{display:flex!important;justify-content:space-between!important;gap:6px 12px!important;flex-wrap:wrap!important;margin-top:5px!important;color:var(--soft)!important;font:700 9px/1.3 "Spline Sans Mono",monospace!important;overflow:visible!important;white-space:normal!important}.fl-main-meta-r6>span{display:block!important;overflow:visible!important;white-space:nowrap!important}@media(max-width:1180px){header #flSyncBadge.fl-main-progress-r6-active{max-width:none!important;justify-content:flex-start!important}.fl-main-progress-r6{padding-inline-start:0!important}}';document.head.appendChild(style);}
   function flRenderProgressR4(){
+    if(typeof window.flSetTransferProgressR12==='function'){window.flSetTransferProgressR12(flProgressR4);return;}
     const body=flOfflineDataModalV365&&flOfflineDataModalV365.querySelector('[data-fl-offline-body]');if(!body)return;
     let panel=body.querySelector('[data-fl-sync-progress-r4]');if(!panel){panel=document.createElement('section');panel.className='fl-unified-section fl-sync-progress-r4';panel.dataset.flSyncProgressR4='1';const device=body.querySelector('[data-fl-unified-device]');device?device.after(panel):body.prepend(panel);}
     const p=flProgressR4,hasTotal=Number(p.totalBytes)>0,measure=hasTotal?flBytesR4(p.uploadedBytes)+' / '+flBytesR4(p.totalBytes):'',parts=p.totalParts?flTrR4('Google confirmed '+Number(p.confirmedParts||0)+' of '+Number(p.totalParts)+' parts.','Google له '+Number(p.totalParts)+' څخه '+Number(p.confirmedParts||0)+' برخې تایید کړې.'):'',retry=flRetryTextR4();
@@ -529,12 +534,12 @@
       try{
         if(name==='syncQueueJoin')flSetProgressR4({stage:'queued',direction:'upload',percent:0,message:'',error:'',errorCode:'',retryAt:0});
         if(name==='pushStart')flSetProgressR4({stage:'preparing',direction:'upload',percent:0,uploadedBytes:0,totalBytes:Number(data.size)||0,confirmedParts:0,totalParts:Number(data.chunkCount)||0,error:'',errorCode:'',retryAt:0});
-        if(name==='pushChunk'){const task=await kvGet(K.UPLOAD_TASK);const measured=flConfirmedBytesR4(task);flSetProgressR4({stage:'uploading',direction:'upload',percent:Math.floor(measured.bytes*100/Math.max(1,measured.total)),uploadedBytes:measured.bytes,totalBytes:measured.total,confirmedParts:flConfirmedPartsR4.size,totalParts:measured.totalParts,error:'',errorCode:'',retryAt:0});}
+        if(name==='pushChunk'){const task=await kvGet(K.UPLOAD_TASK);const measured=flConfirmedBytesR4(task);flSetProgressR4({stage:'uploading',direction:'upload',percent:Math.floor(measured.bytes*100/Math.max(1,measured.total)),uploadedBytes:measured.bytes,totalBytes:measured.total,confirmedParts:flConfirmedPartsR4.size,totalParts:measured.totalParts,message:'',error:'',errorCode:'',retryAt:0});}
         if(name==='pushCommit'){const task=await kvGet(K.UPLOAD_TASK),total=task?(Number(task.size)||String(task.text||'').length):Number(flProgressR4.totalBytes)||0;flSetProgressR4({stage:'finalizing',direction:'upload',percent:100,uploadedBytes:total,totalBytes:total,confirmedParts:Number(task&&task.chunkCount)||flProgressR4.totalParts,totalParts:Number(task&&task.chunkCount)||flProgressR4.totalParts,error:'',errorCode:'',retryAt:0});}
         const result=await flApiBeforeR4(name,data,options||{});
         if(name==='syncQueueJoin'){if(result&&result.granted)flSetProgressR4({stage:'preparing',percent:0});else flSetProgressR4({stage:'queued',percent:0,message:flTrR4('Queue position '+(Number(result&&result.position)||1),'د کتار نوبت '+(Number(result&&result.position)||1))});}
-        if(name==='uploadStatus'&&result){flConfirmedPartsR4=new Set((result.receivedIndexes||[]).map(Number));const task=await kvGet(K.UPLOAD_TASK),measured=flConfirmedBytesR4(task);flSetProgressR4({stage:result.committed?'verifying':'uploading',direction:'upload',percent:result.committed?100:Math.floor(measured.bytes*100/Math.max(1,measured.total)),uploadedBytes:result.committed?measured.total:measured.bytes,totalBytes:measured.total,confirmedParts:flConfirmedPartsR4.size,totalParts:measured.totalParts,error:'',errorCode:'',retryAt:0});}
-        if(name==='pushChunk'){flConfirmedPartsR4.add(Number(data.index));const task=await kvGet(K.UPLOAD_TASK),measured=flConfirmedBytesR4(task);flSetProgressR4({stage:'uploading',direction:'upload',percent:Math.floor(measured.bytes*100/Math.max(1,measured.total)),uploadedBytes:measured.bytes,totalBytes:measured.total,confirmedParts:flConfirmedPartsR4.size,totalParts:measured.totalParts,error:'',errorCode:'',retryAt:0});}
+        if(name==='uploadStatus'&&result){flConfirmedPartsR4=new Set((result.receivedIndexes||[]).map(Number));const task=await kvGet(K.UPLOAD_TASK),measured=flConfirmedBytesR4(task);flSetProgressR4({stage:result.committed?'verifying':'uploading',direction:'upload',percent:result.committed?100:Math.floor(measured.bytes*100/Math.max(1,measured.total)),uploadedBytes:result.committed?measured.total:measured.bytes,totalBytes:measured.total,confirmedParts:flConfirmedPartsR4.size,totalParts:measured.totalParts,message:'',error:'',errorCode:'',retryAt:0});}
+        if(name==='pushChunk'){flConfirmedPartsR4.add(Number(data.index));const task=await kvGet(K.UPLOAD_TASK),measured=flConfirmedBytesR4(task);flSetProgressR4({stage:'uploading',direction:'upload',percent:Math.floor(measured.bytes*100/Math.max(1,measured.total)),uploadedBytes:measured.bytes,totalBytes:measured.total,confirmedParts:flConfirmedPartsR4.size,totalParts:measured.totalParts,message:'',error:'',errorCode:'',retryAt:0});}
         if(name==='pushCommit')flSetProgressR4({stage:'verifying',direction:'upload',percent:100,error:'',errorCode:'',retryAt:0});
         return result;
       }catch(raw){const normal=flNormaliseErrorR4(raw);if(normal.code==='SYNC_QUEUED')flSetProgressR4({stage:'queued',percent:0,error:'',errorCode:'',retryAt:0});else{let retryAt=0;try{const task=await kvGet(K.UPLOAD_TASK);retryAt=Number(task&&task.nextRetryAt)||0;}catch(_){}flSetProgressR4({stage:retryAt>Date.now()?'scheduled':'error',error:normal.message,errorCode:normal.code,retryAt:retryAt});}throw normal.error;}
