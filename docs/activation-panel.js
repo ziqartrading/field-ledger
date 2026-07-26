@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-const MIN=12;window.FL_PASSWORD_GUIDANCE_V390={version:'3.9.0',min:MIN};
+const MIN=12;window.FL_PASSWORD_GUIDANCE_V390={version:'3.9.1',min:MIN};
 function ps(){return typeof LANG!=='undefined'&&LANG==='ps';}
 function checks(v){v=String(v||'');return{length:v.length>=MIN,upper:/[A-Z]/.test(v),lower:/[a-z]/.test(v),number:/[0-9]/.test(v)};}
 function labels(){return ps()?{length:'لږ تر لږه ۱۲ توري',upper:'لږ تر لږه یو لوی انګلیسي توری (A–Z)',lower:'لږ تر لږه یو کوچنی انګلیسي توری (a–z)',number:'لږ تر لږه یوه شمېره (0–9)'}:{length:'at least 12 characters',upper:'at least one uppercase letter (A–Z)',lower:'at least one lowercase letter (a–z)',number:'at least one number (0–9)'};}
