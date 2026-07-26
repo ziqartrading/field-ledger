@@ -452,7 +452,7 @@
   const FL_MAIN_PROGRESS_PATCH_R6='2026-07-25-main-transfer-progress-r6';
   const FL_FOREGROUND_PROGRESS_PATCH_R7='2026-07-25-foreground-progress-r7';
   const FL_SYNC_DIAG_FIX_R8='2026-07-26-backend-patch-compat-session-r8';
-  const FL_FAST_BOOT_PATCH_R14='2026-07-26-fast-boot-session-r14';
+  const FL_FAST_BOOT_PATCH_R15='2026-07-26-boot-session-failopen-r15';
   const FL_FORM_TRANSPORT_PATCH_R9='2026-07-26-single-flight-download-session-r13';
   const FL_SYNC_PROGRESS_PATCH_R4='2026-07-24-tablet-sync-r4';
   let flProgressR4={stage:'idle',direction:'upload',percent:0,uploadedBytes:0,totalBytes:0,confirmedParts:0,totalParts:0,message:'',error:'',errorCode:'',retryAt:0,updatedAt:Date.now()};
